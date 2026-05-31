@@ -1,0 +1,24 @@
+# Configuración local — NUNCA subir al repo
+config.local.js
+.env
+.env.local
+secrets.json
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (por si acaso en el futuro)
+node_modules/
+npm-debug.log
+
+# Archivos temporales
+*.tmp
+*.bak
