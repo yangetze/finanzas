@@ -4,6 +4,7 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { RequireAuth } from '@/components/layout/RequireAuth'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { OnboardingPage } from '@/pages/OnboardingPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -23,6 +24,7 @@ export default function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
             {/* Onboarding — requires session but NOT onboarding done */}

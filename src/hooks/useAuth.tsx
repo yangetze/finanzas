@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, getUserProfile } from '@/lib/supabase'
+import { DEMO_PENDING_KEY } from '@/lib/demo'
 import type { UserProfile } from '@/types'
 
 interface AuthContextValue {
@@ -35,7 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         if (session?.user) {
           const profile = await getUserProfile(session.user.id)
-          setUser(profile)
+          const demoPending = localStorage.getItem(DEMO_PENDING_KEY)
+          if (demoPending) localStorage.removeItem(DEMO_PENDING_KEY)
+          setUser(
+            profile && demoPending && !profile.onboardingDone
+              ? { ...profile, onboardingDone: true }
+              : profile,
+          )
         } else {
           setUser(null)
         }

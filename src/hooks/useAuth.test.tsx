@@ -18,6 +18,10 @@ vi.mock('@/lib/supabase', () => ({
   getUserProfile: mockGetUserProfile,
 }))
 
+vi.mock('@/lib/demo', () => ({
+  DEMO_PENDING_KEY: 'sobres_demo_pending',
+}))
+
 import { AuthProvider, useAuth } from './useAuth'
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
@@ -26,6 +30,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
 describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     mockOnAuthStateChange.mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     })
@@ -93,5 +98,39 @@ describe('useAuth', () => {
     })
 
     expect(result.current.loading).toBe(false)
+  })
+
+  it('overrides onboardingDone to true when demo pending flag is set', async () => {
+    const mockSession = { user: { id: 'demo-user' } }
+    const mockProfile = {
+      id: 'demo-user',
+      email: 'sobres@finanzas.com',
+      name: null,
+      baseCurrencyId: null,
+      country: null,
+      multiCurrency: false,
+      onboardingDone: false,
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+    }
+
+    let capturedCallback: ((event: string, session: unknown) => Promise<void>) | null = null
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => Promise<void>) => {
+      capturedCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+    mockGetSession.mockResolvedValue({ data: { session: null } })
+    mockGetUserProfile.mockResolvedValue(mockProfile)
+
+    localStorage.setItem('sobres_demo_pending', 'true')
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await act(async () => {
+      await capturedCallback!('SIGNED_IN', mockSession)
+    })
+
+    expect(result.current.user?.onboardingDone).toBe(true)
+    expect(localStorage.getItem('sobres_demo_pending')).toBeNull()
   })
 })
