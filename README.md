@@ -1,61 +1,125 @@
-# 💰 Finanzas — Sobres Digitales
+# Sobres — Finanzas Personales
 
-Sistema personal de presupuesto por sobres digitales con soporte para múltiples monedas (USD, USDC, USDt, DOC, VES), tasas de cambio BCV y conexión con Google Sheets.
+Sistema de presupuesto digital por sobres (Budget Zero). Multi-moneda, diseñado
+para la realidad venezolana pero usable en cualquier país.
 
-## Estructura
+## ¿Qué es Sobres?
+
+Sobres es una app de finanzas personales basada en el método Budget Zero:
+cada peso/dólar/bolívar que entra tiene un propósito antes de gastarse.
+La organizas en "sobres" (categorías) y controlas cuánto usas de cada uno.
+
+## Stack
+
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
+| Backend | Supabase (PostgreSQL + Auth + RLS) |
+| Hosting | Vercel |
+| Auth | Magic link (sin contraseña) |
+| Testing | Vitest + React Testing Library |
+
+## Estructura del repo
 
 ```
-finanzas-sobres/
-├── index.html          # App principal (abre en el navegador)
-├── sobres_setup.gs     # Google Apps Script para crear el Sheet
-├── .gitignore
-└── README.md
+finanzas/
+├── docs/
+│   ├── business-context.md    ← Contexto completo del negocio
+│   ├── plan-sprint-01.md      ← Sprint actual
+│   └── plan-sprint-XX.md      ← Sprints futuros
+├── legacy/                    ← App HTML original + Google Apps Script
+├── src/
+│   ├── components/
+│   │   ├── ui/                ← Componentes base
+│   │   ├── layout/            ← AppShell, Sidebar, MobileNav
+│   │   ├── envelopes/         ← Sobres y grupos
+│   │   ├── transactions/      ← Registro de gastos
+│   │   ├── budget/            ← Plantilla mensual
+│   │   ├── debts/             ← TDC y Cashea
+│   │   └── babysteps/         ← Metas financieras
+│   ├── hooks/                 ← Custom hooks
+│   ├── lib/                   ← Supabase client, utils
+│   ├── pages/                 ← Páginas/rutas
+│   └── types/                 ← TypeScript types
+├── supabase/
+│   └── migrations/            ← Schema SQL
+├── CLAUDE.md                  ← Instrucciones para Claude Code
+└── .env.example
 ```
 
-## Configuración
+## Setup local
 
-### 1. Google Sheet
-1. Crea un Google Sheet nuevo en blanco
-2. Ve a **Extensiones → Apps Script**
-3. Pega el contenido de `sobres_setup.gs`
-4. Ejecuta la función `setupCompleto`
-5. Copia el **Sheet ID** de la URL de tu Sheet
+```bash
+# 1. Clonar
+git clone https://github.com/yangetze/finanzas.git
+cd finanzas
 
-### 2. Google API Key
-1. Ve a [console.cloud.google.com](https://console.cloud.google.com)
-2. Crea un proyecto → habilita **Google Sheets API**
-3. Crea una **API Key**
-4. En **Restricciones de la API Key**:
-   - Restricción de aplicación: **Sitios web HTTP**
-   - Agrega tu dominio de GitHub Pages: `https://TU_USUARIO.github.io`
-   - Restricción de API: solo **Google Sheets API**
+# 2. Instalar dependencias
+pnpm install
 
-### 3. App
-1. Abre `index.html` en Chrome
-2. En el setup screen ingresa tu **Sheet ID** y **API Key**
-3. Listo — los datos se guardan en tu Sheet
+# 3. Configurar entorno
+cp .env.example .env
+# Editar .env con credenciales de Supabase
 
-## Seguridad
+# 4. Aplicar schema (Supabase → SQL Editor)
+# Pegar contenido de supabase/migrations/001_initial_schema.sql
 
-- La API Key **nunca** está hardcodeada en el código
-- Se guarda en `localStorage` del navegador (solo en tu dispositivo)
-- La key está restringida a tu dominio en Google Cloud Console
-- El repositorio es **privado**
+# 5. Configurar Auth en Supabase
+# Authentication → Settings → JWT expiry: 2592000 (30 días)
+# Authentication → URL Configuration → Site URL: http://localhost:5173
 
-## GitHub Pages
+# 6. Correr
+pnpm dev
+```
 
-Para acceder desde cualquier dispositivo:
-1. Ve a **Settings → Pages** en tu repo
-2. Source: `Deploy from a branch` → `main` → `/root`
-3. Tu app estará en `https://TU_USUARIO.github.io/finanzas-sobres`
+## Sprints
+
+| Sprint | Contenido | Estado |
+|--------|-----------|--------|
+| 01 | Auth (magic link), shell, onboarding, configuración de usuario | ✅ Completado |
+| 02 | Wallets y tasas de cambio | ⬜ Pendiente |
+| 03 | Sobres — grupos, sub-sobres, prioridades | ⬜ Pendiente |
+| 04 | Presupuesto — plantilla mensual | ⬜ Pendiente |
+| 05 | Gastos — registro multi-moneda | ⬜ Pendiente |
+| 06 | Cashea — cuotas automáticas | ⬜ Pendiente |
+| 07 | Dashboard principal | ⬜ Pendiente |
+| 08 | Deudas — TDC dashboard | ⬜ Pendiente |
+| 09 | Metas — BabySteps | ⬜ Pendiente |
+| 10 | Apertura de mes | ⬜ Pendiente |
 
 ## Monedas soportadas
 
-| Moneda | Tratamiento |
-|--------|-------------|
-| USDC | Base de contabilidad (1:1 USD) |
-| USDt | 1:1 con USD |
-| DOC | 1:1 con USD |
-| USD | 1:1 con USDC |
-| VES | Conversión con tasa BCV o USDt P2P |
-| EUR | Conversión con tasa BCV |
+| Código | Nombre | Tipo | Nota |
+|--------|--------|------|------|
+| USDC | USD Coin | stable | Moneda base por defecto |
+| USDt | Tether | stable | 1:1 con USDC |
+| USD | Dólar americano | fiat | 1:1 con USDC |
+| DOC | Dollar on Chain | stable | 1:1 con USDC |
+| VES | Bolívar venezolano | fiat | Requiere tasa BCV o P2P |
+| EUR | Euro | fiat | Requiere tasa BCV |
+| BTC | Bitcoin | crypto | Para tracking de inversiones |
+
+## Modelo de datos
+
+```
+currencies       → Catálogo global de monedas
+exchange_rates   → Tasas de cambio por fecha (global)
+users            → Perfil + configuración del usuario
+wallets          → Cuentas (asset) y tarjetas (credit)
+envelopes        → Sobres con jerarquía padre/hijo
+budget           → Plantilla mensual de gastos
+transactions     → Todos los movimientos de dinero
+```
+
+## Convenciones
+
+- UI siempre en **español**
+- Código, DB, comentarios siempre en **inglés**
+- DB: `snake_case` | TypeScript: `camelCase`
+- TDD: test primero, implementación después
+- Un sprint = un conjunto pequeño de features shippeables
+
+## Legacy
+
+La versión anterior (Google Sheets + HTML app) está en `/legacy`.
+Sigue funcionando de forma independiente.
