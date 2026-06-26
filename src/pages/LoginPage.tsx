@@ -39,6 +39,7 @@ export function LoginPage() {
     const { error: authError } = await signInAsDemo()
 
     if (authError) {
+      console.error('[demo] login failed in LoginPage:', authError)
       localStorage.removeItem(DEMO_PENDING_KEY)
       setError('No se pudo acceder al demo. Intenta de nuevo.')
       setDemoLoading(false)
