@@ -1,5 +1,5 @@
--- Create the demo user with email pre-confirmed so password auth works
--- without requiring email confirmation to be disabled globally.
+-- Create the demo user with email pre-confirmed and identity record
+-- so GoTrue's signInWithPassword works without email confirmation.
 -- Password: sobres-demo-2025
 
 DO $$
@@ -17,14 +17,27 @@ BEGIN
   ) VALUES (
     demo_id, 'authenticated', 'authenticated',
     'sobres@finanzas.com',
-    crypt('sobres-demo-2025', gen_salt('bf')),
+    crypt('sobres-demo-2025', gen_salt('bf', 10)),
     NOW(), NOW(), NOW(),
-    '{"provider":"email","providers":["email"]}', '{}', false
+    '{"provider":"email","providers":["email"]}',
+    '{"name":"Demo"}',
+    false
+  );
+
+  -- GoTrue requires a matching identity row for signInWithPassword to work.
+  -- provider_id = email for the email provider.
+  -- email column is generated from identity_data so must be omitted.
+  INSERT INTO auth.identities (
+    id, provider_id, user_id, provider, identity_data, created_at, updated_at, last_sign_in_at
+  ) VALUES (
+    gen_random_uuid(),
+    'sobres@finanzas.com',
+    demo_id,
+    'email',
+    jsonb_build_object('sub', demo_id::text, 'email', 'sobres@finanzas.com', 'email_verified', true, 'phone_verified', false),
+    NOW(), NOW(), NOW()
   );
 
   SELECT id INTO usdc_id FROM currencies WHERE code = 'USDC' LIMIT 1;
-
-  UPDATE users
-  SET onboarding_done = true, base_currency_id = usdc_id, name = 'Demo'
-  WHERE id = demo_id;
+  UPDATE users SET onboarding_done = true, base_currency_id = usdc_id, name = 'Demo' WHERE id = demo_id;
 END $$;
