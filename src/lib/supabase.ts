@@ -61,6 +61,14 @@ export async function updateUserProfile(
   return supabase.from('users').update(dbUpdates).eq('id', userId)
 }
 
+export async function signInWithPassword(email: string, password: string) {
+  return supabase.auth.signInWithPassword({ email, password })
+}
+
+export async function signUpWithPassword(email: string, password: string) {
+  return supabase.auth.signUp({ email, password })
+}
+
 export async function getCurrencies() {
   const { data, error } = await supabase
     .from('currencies')
