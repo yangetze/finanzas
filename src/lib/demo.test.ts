@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockSignInWithPassword, mockSignUp, mockFrom } = vi.hoisted(() => ({
+const { mockSignInWithPassword, mockFrom } = vi.hoisted(() => ({
   mockSignInWithPassword: vi.fn(),
-  mockSignUp: vi.fn(),
   mockFrom: vi.fn(),
 }))
 
@@ -10,7 +9,6 @@ vi.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithPassword: mockSignInWithPassword,
-      signUp: mockSignUp,
     },
     from: mockFrom,
   },
@@ -65,33 +63,13 @@ describe('signInAsDemo', () => {
     expect(error).toBeNull()
   })
 
-  it('tries signUp then signIn again when first signIn fails', async () => {
+  it('returns error when signInWithPassword fails', async () => {
     const authError = new Error('Invalid login credentials')
-    mockSignInWithPassword
-      .mockResolvedValueOnce({ data: { session: null }, error: authError })
-      .mockResolvedValueOnce({
-        data: { session: { user: { id: 'demo-id' } } },
-        error: null,
-      })
-    mockSignUp.mockResolvedValue({ data: {}, error: null })
-
-    const { error } = await signInAsDemo()
-
-    expect(mockSignUp).toHaveBeenCalledWith({
-      email: DEMO_EMAIL,
-      password: expect.any(String),
-    })
-    expect(mockSignInWithPassword).toHaveBeenCalledTimes(2)
-    expect(error).toBeNull()
-  })
-
-  it('returns error when all auth attempts fail', async () => {
-    const authError = new Error('Auth failed')
     mockSignInWithPassword.mockResolvedValue({ data: { session: null }, error: authError })
-    mockSignUp.mockResolvedValue({ data: {}, error: new Error('Signup not allowed') })
 
     const { error } = await signInAsDemo()
 
+    expect(mockSignInWithPassword).toHaveBeenCalledTimes(1)
     expect(error).toBeTruthy()
   })
 })

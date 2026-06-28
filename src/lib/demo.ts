@@ -5,46 +5,23 @@ export const DEMO_PASSWORD = 'sobres-demo-2025'
 export const DEMO_PENDING_KEY = 'sobres_demo_pending'
 
 export async function signInAsDemo(): Promise<{ error: Error | null }> {
-  let { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: DEMO_EMAIL,
     password: DEMO_PASSWORD,
   })
 
   if (error) {
     console.error('[demo] signInWithPassword failed:', error.message, error)
-
-    // Account may not exist yet — try creating it (requires email confirmation disabled in Supabase)
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    })
-
-    if (signUpError) {
-      console.error('[demo] signUp also failed:', signUpError.message, signUpError)
-      return { error: error as Error | null }
-    }
-
-    const result = await supabase.auth.signInWithPassword({
-      email: DEMO_EMAIL,
-      password: DEMO_PASSWORD,
-    })
-    data = result.data
-    error = result.error
-
-    if (error) {
-      console.error('[demo] signInWithPassword after signUp failed:', error.message, error)
-      // Likely cause: Supabase requires email confirmation. Pre-create the demo
-      // user via SQL migration (see supabase/migrations/) to bypass this.
-    }
+    return { error: error as Error | null }
   }
 
-  if (!error && data.session) {
+  if (data.session) {
     setupDemoAccount(data.session.user.id).catch((err) => {
       console.error('[demo] setupDemoAccount failed:', err)
     })
   }
 
-  return { error: error as Error | null }
+  return { error: null }
 }
 
 async function setupDemoAccount(userId: string): Promise<void> {
