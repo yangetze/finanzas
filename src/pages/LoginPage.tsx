@@ -23,7 +23,12 @@ export function LoginPage() {
     const { error: authError } = await signInWithMagicLink(email.trim())
 
     if (authError) {
-      setError('No pudimos enviar el enlace. Intenta de nuevo.')
+      console.error('[login] magic link error:', authError.status, authError.message, authError)
+      if (authError.status === 429) {
+        setError('Demasiados intentos. Espera unos minutos antes de pedir otro enlace.')
+      } else {
+        setError(`No pudimos enviar el enlace. ${authError.message}`)
+      }
     } else {
       setSent(true)
     }
