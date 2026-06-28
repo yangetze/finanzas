@@ -51,6 +51,32 @@ describe('LoginPage', () => {
     })
   })
 
+  it('shows rate limit message on 429 magic link error', async () => {
+    const rateLimitError = Object.assign(new Error('Email rate limit exceeded'), { status: 429 })
+    mockSignInWithMagicLink.mockResolvedValue({ error: rateLimitError })
+    renderLogin()
+
+    await userEvent.type(screen.getByLabelText(/correo electrónico/i), 'user@test.com')
+    await userEvent.click(screen.getByRole('button', { name: /recibir enlace/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/demasiados intentos/i)).toBeInTheDocument()
+    })
+  })
+
+  it('shows error message on generic magic link failure', async () => {
+    const authError = Object.assign(new Error('Network error'), { status: 500 })
+    mockSignInWithMagicLink.mockResolvedValue({ error: authError })
+    renderLogin()
+
+    await userEvent.type(screen.getByLabelText(/correo electrónico/i), 'user@test.com')
+    await userEvent.click(screen.getByRole('button', { name: /recibir enlace/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/no pudimos enviar el enlace/i)).toBeInTheDocument()
+    })
+  })
+
   it('renders "Ver demo" button', () => {
     renderLogin()
     expect(screen.getByRole('button', { name: /ver demo/i })).toBeInTheDocument()
