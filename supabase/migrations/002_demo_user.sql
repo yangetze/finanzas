@@ -12,14 +12,20 @@ BEGIN
   DELETE FROM auth.identities WHERE provider_id = 'sobres@finanzas.com' AND provider = 'email';
   DELETE FROM auth.users WHERE email = 'sobres@finanzas.com';
 
+  -- confirmation_token/recovery_token must be '' (empty string), not NULL.
+  -- GoTrue's signInWithPassword lookup uses WHERE confirmation_token = ''
+  -- and NULL = '' evaluates to NULL (not true), causing "Invalid login credentials".
   INSERT INTO auth.users (
     id, aud, role, email, encrypted_password, email_confirmed_at,
+    confirmation_token, recovery_token, email_change_token_new,
     created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_super_admin
   ) VALUES (
     demo_id, 'authenticated', 'authenticated',
     'sobres@finanzas.com',
     crypt('sobres-demo-2025', gen_salt('bf', 10)),
-    NOW(), NOW(), NOW(),
+    NOW(),
+    '', '', '',
+    NOW(), NOW(),
     '{"provider":"email","providers":["email"]}',
     '{"name":"Demo"}',
     false
