@@ -41,7 +41,7 @@ export function LoginPage() {
     if (authError) {
       console.error('[demo] login failed in LoginPage:', authError)
       localStorage.removeItem(DEMO_PENDING_KEY)
-      setError('No se pudo acceder al demo. Intenta de nuevo.')
+      setError(`No se pudo acceder al demo. ${authError.message}`)
       setDemoLoading(false)
     }
     // On success: onAuthStateChange in useAuth handles redirect

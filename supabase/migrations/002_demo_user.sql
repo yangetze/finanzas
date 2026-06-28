@@ -1,15 +1,16 @@
 -- Create the demo user with email pre-confirmed and identity record
 -- so GoTrue's signInWithPassword works without email confirmation.
 -- Password: sobres-demo-2025
+-- Idempotent: deletes and recreates so a stale/broken demo user is always reset.
 
 DO $$
 DECLARE
   demo_id uuid := gen_random_uuid();
   usdc_id uuid;
 BEGIN
-  IF EXISTS (SELECT 1 FROM auth.users WHERE email = 'sobres@finanzas.com') THEN
-    RETURN;
-  END IF;
+  -- Remove any previous demo user so we start clean.
+  DELETE FROM auth.identities WHERE provider_id = 'sobres@finanzas.com' AND provider = 'email';
+  DELETE FROM auth.users WHERE email = 'sobres@finanzas.com';
 
   INSERT INTO auth.users (
     id, aud, role, email, encrypted_password, email_confirmed_at,
