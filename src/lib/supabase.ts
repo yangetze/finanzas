@@ -296,6 +296,176 @@ export async function deactivateBudgetItem(id: string) {
   if (error) throw error
 }
 
+export async function getTransactions(userId: string, month?: string) {
+  let query = supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .neq('status', 'anulado')
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (month) {
+    const [y, m] = month.split('-')
+    const lastDay = new Date(Number(y), Number(m), 0).getDate()
+    query = query.gte('date', `${month}-01`).lte('date', `${month}-${lastDay}`)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function getUpcomingTransactions(userId: string) {
+  const today = new Date().toISOString().split('T')[0]
+  const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'apartado')
+    .gte('date', today)
+    .lte('date', future)
+    .order('date')
+  if (error) throw error
+  return data
+}
+
+export async function createTransaction(data: {
+  userId: string
+  date: string
+  description: string
+  type: 'expense' | 'income'
+  status: 'apartado' | 'pagado'
+  envelopeId?: string | null
+  walletId?: string | null
+  originCurrencyId: string
+  originAmount: number
+  paymentCurrencyId: string
+  paymentAmount: number
+  conversionRate?: number | null
+  baseCurrencyId: string
+  baseAmount: number
+  baseRate?: number | null
+  notes?: string | null
+}) {
+  const { error } = await supabase.from('transactions').insert({
+    user_id: data.userId,
+    date: data.date,
+    description: data.description,
+    type: data.type,
+    status: data.status,
+    envelope_id: data.envelopeId ?? null,
+    wallet_id: data.walletId ?? null,
+    origin_currency_id: data.originCurrencyId,
+    origin_amount: data.originAmount,
+    payment_currency_id: data.paymentCurrencyId,
+    payment_amount: data.paymentAmount,
+    conversion_rate: data.conversionRate ?? null,
+    base_currency_id: data.baseCurrencyId,
+    base_amount: data.baseAmount,
+    base_rate: data.baseRate ?? null,
+    notes: data.notes ?? null,
+    installment_number: null,
+    installment_total: null,
+    group_id: null,
+  })
+  if (error) throw error
+}
+
+export async function createTransactionsBatch(
+  transactions: Array<{
+    userId: string
+    date: string
+    description: string
+    type: 'expense' | 'income'
+    status: 'apartado' | 'pagado'
+    envelopeId?: string | null
+    walletId?: string | null
+    originCurrencyId: string
+    originAmount: number
+    paymentCurrencyId: string
+    paymentAmount: number
+    conversionRate?: number | null
+    baseCurrencyId: string
+    baseAmount: number
+    baseRate?: number | null
+    notes?: string | null
+  }>,
+) {
+  const rows = transactions.map((t) => ({
+    user_id: t.userId,
+    date: t.date,
+    description: t.description,
+    type: t.type,
+    status: t.status,
+    envelope_id: t.envelopeId ?? null,
+    wallet_id: t.walletId ?? null,
+    origin_currency_id: t.originCurrencyId,
+    origin_amount: t.originAmount,
+    payment_currency_id: t.paymentCurrencyId,
+    payment_amount: t.paymentAmount,
+    conversion_rate: t.conversionRate ?? null,
+    base_currency_id: t.baseCurrencyId,
+    base_amount: t.baseAmount,
+    base_rate: t.baseRate ?? null,
+    notes: t.notes ?? null,
+    installment_number: null,
+    installment_total: null,
+    group_id: null,
+  }))
+  const { error } = await supabase.from('transactions').insert(rows)
+  if (error) throw error
+}
+
+export async function updateTransaction(
+  id: string,
+  data: Partial<{
+    date: string
+    description: string
+    type: 'expense' | 'income'
+    status: 'apartado' | 'pagado' | 'anulado'
+    envelopeId: string | null
+    walletId: string | null
+    originCurrencyId: string
+    originAmount: number
+    paymentCurrencyId: string
+    paymentAmount: number
+    conversionRate: number | null
+    baseCurrencyId: string
+    baseAmount: number
+    baseRate: number | null
+    notes: string | null
+  }>,
+) {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (data.date !== undefined) updates.date = data.date
+  if (data.description !== undefined) updates.description = data.description
+  if (data.type !== undefined) updates.type = data.type
+  if (data.status !== undefined) updates.status = data.status
+  if (data.envelopeId !== undefined) updates.envelope_id = data.envelopeId
+  if (data.walletId !== undefined) updates.wallet_id = data.walletId
+  if (data.originCurrencyId !== undefined) updates.origin_currency_id = data.originCurrencyId
+  if (data.originAmount !== undefined) updates.origin_amount = data.originAmount
+  if (data.paymentCurrencyId !== undefined) updates.payment_currency_id = data.paymentCurrencyId
+  if (data.paymentAmount !== undefined) updates.payment_amount = data.paymentAmount
+  if (data.conversionRate !== undefined) updates.conversion_rate = data.conversionRate
+  if (data.baseCurrencyId !== undefined) updates.base_currency_id = data.baseCurrencyId
+  if (data.baseAmount !== undefined) updates.base_amount = data.baseAmount
+  if (data.baseRate !== undefined) updates.base_rate = data.baseRate
+  if (data.notes !== undefined) updates.notes = data.notes
+  const { error } = await supabase.from('transactions').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteTransaction(id: string) {
+  const { error } = await supabase
+    .from('transactions')
+    .update({ status: 'anulado', updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function getExchangeRates() {
   const { data, error } = await supabase
     .from('exchange_rates')
