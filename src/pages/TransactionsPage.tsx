@@ -1,8 +1,202 @@
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch } from '@/hooks/useTransactions'
+import { useBudgetItems } from '@/hooks/useBudgetItems'
+import { useEnvelopes } from '@/hooks/useEnvelopes'
+import { useWallets } from '@/hooks/useWallets'
+import { useCurrencies } from '@/hooks/useCurrencies'
+import { TransactionRow } from '@/components/transactions/TransactionRow'
+import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { MonthOpener } from '@/components/budget/MonthOpener'
+import { Button } from '@/components/ui/Button'
+import { Spinner } from '@/components/ui/Spinner'
+import type { Transaction } from '@/types'
+
+function currentMonth() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 export function TransactionsPage() {
+  const { user } = useAuth()
+  const [month, setMonth] = useState(currentMonth())
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<Transaction | null>(null)
+
+  const { data: transactions, isLoading: txLoading } = useTransactions(user?.id, month)
+  const { data: budgetItems } = useBudgetItems(user?.id)
+  const { data: envelopes } = useEnvelopes(user?.id)
+  const { data: wallets } = useWallets(user?.id)
+  const { data: currencies } = useCurrencies()
+
+  const createTx = useCreateTransaction()
+  const updateTx = useUpdateTransaction()
+  const deleteTx = useDeleteTransaction()
+  const batchCreate = useCreateTransactionsBatch()
+
+  const [year, monthNum] = month.split('-').map(Number)
+
+  function getEnvelope(id: string | null) {
+    return id ? envelopes?.find((e) => e.id === id) : undefined
+  }
+
+  function getCurrency(id: string) {
+    return currencies?.find((c) => c.id === id)
+  }
+
+  function handleClose() {
+    setShowForm(false)
+    setEditing(null)
+  }
+
+  function handleEdit(tx: Transaction) {
+    setEditing(tx)
+    setShowForm(true)
+  }
+
+  function handleMarkPaid(id: string) {
+    updateTx.mutate({ id, data: { status: 'pagado' } })
+  }
+
+  function handleDelete(id: string) {
+    deleteTx.mutate(id)
+  }
+
+  function handleSubmit(values: {
+    date: string
+    description: string
+    type: Transaction['type']
+    status: 'apartado' | 'pagado'
+    envelopeId: string | null
+    walletId: string | null
+    currencyId: string
+    amount: number
+    originAmount: number
+    notes: string | null
+  }) {
+    const baseCurrencyId = user?.baseCurrencyId ?? values.currencyId
+    const payload = {
+      userId: user!.id,
+      date: values.date,
+      description: values.description,
+      type: values.type,
+      status: values.status,
+      envelopeId: values.envelopeId,
+      walletId: values.walletId,
+      originCurrencyId: values.currencyId,
+      originAmount: values.originAmount,
+      paymentCurrencyId: values.currencyId,
+      paymentAmount: values.amount,
+      baseCurrencyId,
+      baseAmount: values.amount,
+    }
+    if (editing) {
+      updateTx.mutate({ id: editing.id, data: payload }, { onSuccess: handleClose })
+    } else {
+      createTx.mutate(payload, { onSuccess: handleClose })
+    }
+  }
+
+  if (txLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-64">
+        <Spinner />
+      </div>
+    )
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-64 text-center">
-      <p className="text-3xl mb-3">🧾</p>
-      <p className="text-ink-muted font-ui">Tus gastos aparecerán aquí</p>
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-xl font-ui font-semibold text-ink">Gastos</h1>
+        <div className="flex items-center gap-2">
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="text-sm font-ui bg-canvas-soft border border-border rounded-lg px-3 py-1.5 text-ink focus:outline-none focus:border-gold"
+          />
+          <Button size="sm" onClick={() => setShowForm(true)}>
+            <Plus size={16} />
+            Nuevo
+          </Button>
+        </div>
+      </div>
+
+      {budgetItems && envelopes && currencies && user && (
+        <MonthOpener
+          items={budgetItems}
+          userId={user.id}
+          year={year}
+          month={monthNum}
+          baseCurrencyId={user.baseCurrencyId ?? currencies[0]?.id ?? ''}
+          onOpen={(txs) => batchCreate.mutate(txs)}
+          loading={batchCreate.isPending}
+        />
+      )}
+
+      {showForm && envelopes && wallets && currencies && (
+        <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+          <h2 className="text-base font-ui font-semibold text-ink mb-4">
+            {editing ? 'Editar gasto' : 'Nuevo gasto'}
+          </h2>
+          <TransactionForm
+            envelopes={envelopes}
+            wallets={wallets}
+            currencies={currencies}
+            initialValues={
+              editing
+                ? {
+                    date: editing.date,
+                    description: editing.description,
+                    type: editing.type,
+                    status: editing.status === 'anulado' ? 'apartado' : editing.status,
+                    envelopeId: editing.envelopeId,
+                    walletId: editing.walletId,
+                    currencyId: editing.paymentCurrencyId,
+                    amount: editing.paymentAmount,
+                    notes: editing.notes,
+                  }
+                : undefined
+            }
+            onSubmit={handleSubmit}
+            onCancel={handleClose}
+            loading={createTx.isPending || updateTx.isPending}
+          />
+        </div>
+      )}
+
+      {transactions && transactions.length === 0 && !showForm && (
+        <div className="flex flex-col items-center justify-center min-h-48 text-center gap-2">
+          <p className="text-3xl">🧾</p>
+          <p className="text-ink-muted font-ui">Sin transacciones este mes</p>
+          <Button size="sm" variant="ghost" onClick={() => setShowForm(true)}>
+            Agregar gasto
+          </Button>
+        </div>
+      )}
+
+      {transactions && transactions.length > 0 && (
+        <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
+          {transactions.map((tx, idx) => {
+            const currency = getCurrency(tx.paymentCurrencyId)
+            if (!currency) return null
+            return (
+              <div key={tx.id} className={idx > 0 ? 'border-t border-border' : ''}>
+                <TransactionRow
+                  transaction={tx}
+                  currency={currency}
+                  envelope={getEnvelope(tx.envelopeId)}
+                  onEdit={handleEdit}
+                  onMarkPaid={handleMarkPaid}
+                  onDelete={handleDelete}
+                />
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

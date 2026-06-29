@@ -3,8 +3,11 @@ import { ArrowRight } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useWallets } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { useUpcomingTransactions } from '@/hooks/useTransactions'
+import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { Card } from '@/components/ui/Card'
 import { Spinner } from '@/components/ui/Spinner'
+import { cn } from '@/lib/utils'
 
 function formatAmount(amount: number, symbol: string) {
   return `${symbol} ${Math.abs(amount).toLocaleString('es-VE', {
@@ -13,15 +16,28 @@ function formatAmount(amount: number, symbol: string) {
   })}`
 }
 
+function daysUntil(dateStr: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(dateStr + 'T00:00:00')
+  return Math.round((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+}
+
 export function DashboardPage() {
   const { user } = useAuth()
   const { data: wallets, isLoading: walletsLoading } = useWallets(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
+  const { data: upcoming } = useUpcomingTransactions(user?.id)
+  const { data: envelopes } = useEnvelopes(user?.id)
 
   const isLoading = walletsLoading || currenciesLoading
 
   function getCurrency(currencyId: string) {
     return currencies?.find((c) => c.id === currencyId)
+  }
+
+  function getEnvelope(id: string | null) {
+    return id ? envelopes?.find((e) => e.id === id) : undefined
   }
 
   const assetWallets = wallets?.filter((w) => w.type === 'asset') ?? []
@@ -96,6 +112,46 @@ export function DashboardPage() {
                     )}
                   </div>
                 </Card>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {upcoming && upcoming.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-ui font-semibold text-ink-muted uppercase tracking-wide">
+              Próximos pagos
+            </h2>
+            <Link to="/gastos" className="text-xs font-ui text-ink-faint hover:text-gold inline-flex items-center gap-1">
+              Ver todos <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
+            {upcoming.map((tx, idx) => {
+              const currency = getCurrency(tx.paymentCurrencyId)
+              const envelope = getEnvelope(tx.envelopeId)
+              const days = daysUntil(tx.date)
+              return (
+                <div key={tx.id} className={cn('flex items-center gap-3 px-4 py-3', idx > 0 && 'border-t border-border')}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-ui text-ink truncate">{tx.description}</p>
+                    {envelope && (
+                      <p className="text-xs font-ui text-ink-faint mt-0.5">
+                        {envelope.emoji ? `${envelope.emoji} ` : ''}{envelope.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-mono font-semibold text-coral">
+                      {currency ? `${currency.symbol} ${tx.paymentAmount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : tx.paymentAmount}
+                    </p>
+                    <p className={cn('text-xs font-ui', days === 0 ? 'text-gold' : days <= 3 ? 'text-coral' : 'text-ink-faint')}>
+                      {days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`}
+                    </p>
+                  </div>
+                </div>
               )
             })}
           </div>
