@@ -14,6 +14,7 @@ import { BudgetPage } from '@/pages/BudgetPage'
 import { DebtsPage } from '@/pages/DebtsPage'
 import { BabyStepsPage } from '@/pages/BabyStepsPage'
 import { ExchangeRatesPage } from '@/pages/ExchangeRatesPage'
+import { WalletsPage } from '@/pages/WalletsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
               }
             >
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/billeteras" element={<WalletsPage />} />
               <Route path="/sobres" element={<EnvelopesPage />} />
               <Route path="/gastos" element={<TransactionsPage />} />
               <Route path="/presupuesto" element={<BudgetPage />} />
