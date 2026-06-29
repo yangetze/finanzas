@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch } from '@/hooks/useTransactions'
 import { useBudgetItems } from '@/hooks/useBudgetItems'
@@ -8,6 +8,7 @@ import { useWallets } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
 import { TransactionRow } from '@/components/transactions/TransactionRow'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { CasheaForm } from '@/components/transactions/CasheaForm'
 import { MonthOpener } from '@/components/budget/MonthOpener'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
@@ -22,6 +23,7 @@ export function TransactionsPage() {
   const { user } = useAuth()
   const [month, setMonth] = useState(currentMonth())
   const [showForm, setShowForm] = useState(false)
+  const [showCashea, setShowCashea] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
 
   const { data: transactions, isLoading: txLoading } = useTransactions(user?.id, month)
@@ -47,6 +49,7 @@ export function TransactionsPage() {
 
   function handleClose() {
     setShowForm(false)
+    setShowCashea(false)
     setEditing(null)
   }
 
@@ -117,6 +120,10 @@ export function TransactionsPage() {
             onChange={(e) => setMonth(e.target.value)}
             className="text-sm font-ui bg-canvas-soft border border-border rounded-lg px-3 py-1.5 text-ink focus:outline-none focus:border-gold"
           />
+          <Button size="sm" variant="ghost" onClick={() => setShowCashea(true)}>
+            <ShoppingBag size={16} />
+            Cashea
+          </Button>
           <Button size="sm" onClick={() => setShowForm(true)}>
             <Plus size={16} />
             Nuevo
@@ -134,6 +141,24 @@ export function TransactionsPage() {
           onOpen={(txs) => batchCreate.mutate(txs)}
           loading={batchCreate.isPending}
         />
+      )}
+
+      {showCashea && envelopes && wallets && currencies && (
+        <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+          <h2 className="text-base font-ui font-semibold text-ink mb-4">Compra en cuotas (Cashea)</h2>
+          <CasheaForm
+            envelopes={envelopes}
+            wallets={wallets}
+            currencies={currencies}
+            baseCurrencyId={user?.baseCurrencyId ?? undefined}
+            onSubmit={(txs) => {
+              const withUserId = txs.map((t) => ({ ...t, userId: user!.id }))
+              batchCreate.mutate(withUserId, { onSuccess: handleClose })
+            }}
+            onCancel={handleClose}
+            loading={batchCreate.isPending}
+          />
+        </div>
       )}
 
       {showForm && envelopes && wallets && currencies && (
