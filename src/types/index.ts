@@ -62,6 +62,7 @@ export interface Envelope {
   emoji: string | null
   isActive: boolean
   sortOrder: number
+  notes: string | null
   createdAt: string
   updatedAt: string
 }

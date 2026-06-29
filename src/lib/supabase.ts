@@ -148,6 +148,154 @@ export async function deactivateWallet(id: string) {
   if (error) throw error
 }
 
+export async function getEnvelopes(userId: string) {
+  const { data, error } = await supabase
+    .from('envelopes')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('sort_order')
+
+  if (error) throw error
+  return data
+}
+
+export async function createEnvelope(data: {
+  userId: string
+  name: string
+  category: string
+  priority: 'critico' | 'importante' | 'flexible'
+  parentId?: string | null
+  emoji?: string | null
+  notes?: string | null
+  sortOrder?: number
+}) {
+  const { error } = await supabase.from('envelopes').insert({
+    user_id: data.userId,
+    name: data.name,
+    category: data.category,
+    priority: data.priority,
+    parent_id: data.parentId ?? null,
+    emoji: data.emoji ?? null,
+    notes: data.notes ?? null,
+    sort_order: data.sortOrder ?? 0,
+  })
+  if (error) throw error
+}
+
+export async function updateEnvelope(
+  id: string,
+  data: Partial<{
+    name: string
+    category: string
+    priority: 'critico' | 'importante' | 'flexible'
+    parentId: string | null
+    emoji: string | null
+    notes: string | null
+    sortOrder: number
+  }>,
+) {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (data.name !== undefined) updates.name = data.name
+  if (data.category !== undefined) updates.category = data.category
+  if (data.priority !== undefined) updates.priority = data.priority
+  if (data.parentId !== undefined) updates.parent_id = data.parentId
+  if (data.emoji !== undefined) updates.emoji = data.emoji
+  if (data.notes !== undefined) updates.notes = data.notes
+  if (data.sortOrder !== undefined) updates.sort_order = data.sortOrder
+
+  const { error } = await supabase.from('envelopes').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deactivateEnvelope(id: string) {
+  const { error } = await supabase
+    .from('envelopes')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function getBudgetItems(userId: string) {
+  const { data, error } = await supabase
+    .from('budget_items')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('created_at')
+
+  if (error) throw error
+  return data
+}
+
+export async function createBudgetItem(data: {
+  userId: string
+  envelopeId: string
+  name: string
+  baseAmount: number
+  currencyId: string
+  frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
+  walletId?: string | null
+  paymentDay?: number | null
+  startMonth?: number | null
+  notes?: string | null
+}) {
+  const { error } = await supabase.from('budget_items').insert({
+    user_id: data.userId,
+    envelope_id: data.envelopeId,
+    name: data.name,
+    base_amount: data.baseAmount,
+    currency_id: data.currencyId,
+    frequency: data.frequency,
+    spending_type: data.spendingType,
+    wallet_id: data.walletId ?? null,
+    payment_day: data.paymentDay ?? null,
+    start_month: data.startMonth ?? null,
+    notes: data.notes ?? null,
+  })
+  if (error) throw error
+}
+
+export async function updateBudgetItem(
+  id: string,
+  data: Partial<{
+    envelopeId: string
+    name: string
+    baseAmount: number
+    currencyId: string
+    frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+    spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
+    walletId: string | null
+    paymentDay: number | null
+    startMonth: number | null
+    notes: string | null
+  }>,
+) {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (data.envelopeId !== undefined) updates.envelope_id = data.envelopeId
+  if (data.name !== undefined) updates.name = data.name
+  if (data.baseAmount !== undefined) updates.base_amount = data.baseAmount
+  if (data.currencyId !== undefined) updates.currency_id = data.currencyId
+  if (data.frequency !== undefined) updates.frequency = data.frequency
+  if (data.spendingType !== undefined) updates.spending_type = data.spendingType
+  if (data.walletId !== undefined) updates.wallet_id = data.walletId
+  if (data.paymentDay !== undefined) updates.payment_day = data.paymentDay
+  if (data.startMonth !== undefined) updates.start_month = data.startMonth
+  if (data.notes !== undefined) updates.notes = data.notes
+
+  const { error } = await supabase.from('budget_items').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deactivateBudgetItem(id: string) {
+  const { error } = await supabase
+    .from('budget_items')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function getExchangeRates() {
   const { data, error } = await supabase
     .from('exchange_rates')
