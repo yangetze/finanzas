@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
+  Wallet,
   Inbox,
   Receipt,
   ListChecks,
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/billeteras', label: 'Billeteras', icon: Wallet },
   { to: '/sobres', label: 'Sobres', icon: Inbox },
   { to: '/gastos', label: 'Gastos', icon: Receipt },
   { to: '/presupuesto', label: 'Presupuesto', icon: ListChecks },
