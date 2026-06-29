@@ -53,4 +53,9 @@ describe('BudgetItemRow', () => {
     await userEvent.click(screen.getByRole('button', { name: /desactivar/i }))
     expect(onDeactivate).toHaveBeenCalledWith('b1')
   })
+
+  it('shows progress bar with spent amount when spent is provided', () => {
+    render(<BudgetItemRow item={ITEM} currency={USD} spent={25} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
+    expect(screen.getByText(/25,00/)).toBeInTheDocument()
+  })
 })

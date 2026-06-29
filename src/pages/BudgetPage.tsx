@@ -4,11 +4,17 @@ import { useAuth } from '@/hooks/useAuth'
 import { useBudgetItems, useCreateBudgetItem, useUpdateBudgetItem, useDeactivateBudgetItem } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
 import { BudgetItemRow } from '@/components/budget/BudgetItemRow'
 import { BudgetForm } from '@/components/budget/BudgetForm'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import type { BudgetItem } from '@/types'
+
+function currentMonth() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
 
 const SPENDING_TYPE_LABELS: Record<BudgetItem['spendingType'], string> = {
   supervivencia: '🔴 Supervivencia',
@@ -18,9 +24,11 @@ const SPENDING_TYPE_LABELS: Record<BudgetItem['spendingType'], string> = {
 
 export function BudgetPage() {
   const { user } = useAuth()
+  const [month] = useState(currentMonth())
   const { data: items, isLoading: itemsLoading } = useBudgetItems(user?.id)
   const { data: envelopes, isLoading: envsLoading } = useEnvelopes(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
+  const { data: spending } = useEnvelopeSpending(user?.id, month)
   const createItem = useCreateBudgetItem()
   const updateItem = useUpdateBudgetItem()
   const deactivateItem = useDeactivateBudgetItem()
@@ -29,6 +37,10 @@ export function BudgetPage() {
   const [editing, setEditing] = useState<BudgetItem | null>(null)
 
   const isLoading = itemsLoading || envsLoading || currenciesLoading
+
+  function getSpent(envelopeId: string) {
+    return spending?.find((s) => s.envelopeId === envelopeId)?.spent
+  }
 
   function getCurrency(currencyId: string) {
     return currencies?.find((c) => c.id === currencyId)
@@ -157,6 +169,7 @@ export function BudgetPage() {
                       <BudgetItemRow
                         item={item}
                         currency={currency}
+                        spent={getSpent(item.envelopeId)}
                         onEdit={handleEdit}
                         onDeactivate={(id) => deactivateItem.mutate(id)}
                       />
