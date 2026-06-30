@@ -21,7 +21,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 vi.mock('@/hooks/useAuth', () => ({
-  useAuth: () => ({ user: { id: 'user-123', name: null }, loading: false }),
+  useAuth: () => ({ user: { id: 'user-123', name: null }, loading: false, refreshUser: vi.fn().mockResolvedValue(undefined) }),
 }))
 
 import { OnboardingPage } from './OnboardingPage'
