@@ -14,7 +14,7 @@ const TOTAL_STEPS = 3
 
 export function OnboardingPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
 
   const [step, setStep] = useState(1)
   const [name, setName] = useState('')
@@ -57,6 +57,7 @@ export function OnboardingPage() {
       onboardingDone: true,
     })
 
+    await refreshUser()
     navigate('/dashboard', { replace: true })
   }
 
