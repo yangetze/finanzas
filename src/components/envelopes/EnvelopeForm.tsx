@@ -2,12 +2,10 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import type { Envelope, EnvelopePriority, SpendingType } from '@/types'
+import type { Envelope, SpendingType } from '@/types'
 
 interface EnvelopeFormValues {
   name: string
-  category: string
-  priority: EnvelopePriority
   spendCategory: SpendingType | null
   parentId: string | null
   emoji: string | null
@@ -16,8 +14,6 @@ interface EnvelopeFormValues {
 
 interface EnvelopeFormInitial {
   name: string
-  category: string
-  priority: EnvelopePriority
   spendCategory?: SpendingType | null
   parentId: string | null
   emoji: string | null
@@ -32,12 +28,6 @@ interface EnvelopeFormProps {
   loading?: boolean
 }
 
-const PRIORITY_OPTIONS = [
-  { value: 'critico', label: 'Crítico — no puede omitirse' },
-  { value: 'importante', label: 'Importante — ajustable' },
-  { value: 'flexible', label: 'Flexible — puede reducirse' },
-]
-
 const SPEND_CATEGORY_OPTIONS = [
   { value: '', label: 'Sin categoría' },
   { value: 'supervivencia', label: 'Supervivencia — necesidades básicas' },
@@ -49,8 +39,6 @@ const NO_PARENT = '__none__'
 
 export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loading }: EnvelopeFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
-  const [category, setCategory] = useState(initialValues?.category ?? '')
-  const [priority, setPriority] = useState<EnvelopePriority>(initialValues?.priority ?? 'critico')
   const [spendCategory, setSpendCategory] = useState<SpendingType | null>(initialValues?.spendCategory ?? null)
   const [parentId, setParentId] = useState(initialValues?.parentId ?? NO_PARENT)
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? '')
@@ -73,8 +61,6 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
     setNameError('')
     onSubmit({
       name: name.trim(),
-      category: category.trim() || name.trim(),
-      priority,
       spendCategory,
       parentId: parentId === NO_PARENT ? null : parentId,
       emoji: emoji.trim() || null,
@@ -106,13 +92,6 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
       </div>
 
       <Select
-        label="Prioridad"
-        options={PRIORITY_OPTIONS}
-        value={priority}
-        onChange={(e) => setPriority(e.target.value as EnvelopePriority)}
-      />
-
-      <Select
         label="Categoría de gasto"
         options={SPEND_CATEGORY_OPTIONS}
         value={spendCategory ?? ''}
@@ -124,13 +103,6 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
         options={parentOptions}
         value={parentId}
         onChange={(e) => setParentId(e.target.value)}
-      />
-
-      <Input
-        label="Categoría"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        placeholder="Igual al nombre si no se especifica"
       />
 
       <Input

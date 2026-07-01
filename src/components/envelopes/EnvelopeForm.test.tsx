@@ -6,17 +6,16 @@ import type { Envelope } from '@/types'
 
 const ENVELOPES: Envelope[] = [
   {
-    id: 'e1', userId: 'u1', parentId: null, name: 'Hogar', category: 'Hogar',
-    priority: 'critico', spendCategory: null, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
+    id: 'e1', userId: 'u1', parentId: null, name: 'Hogar',
+    spendCategory: 'supervivencia', emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
     createdAt: '2026-01-01', updatedAt: '2026-01-01',
   },
 ]
 
 describe('EnvelopeForm', () => {
-  it('renders name and priority fields', () => {
+  it('renders name field', () => {
     render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
     expect(screen.getByLabelText(/nombre/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/prioridad/i)).toBeInTheDocument()
   })
 
   it('shows validation error when name is empty', async () => {
@@ -38,7 +37,7 @@ describe('EnvelopeForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Inter', priority: 'critico' }),
+      expect.objectContaining({ name: 'Inter' }),
     )
   })
 
@@ -52,9 +51,7 @@ describe('EnvelopeForm', () => {
   it('pre-fills when editing', () => {
     const initial = {
       name: 'Hogar',
-      category: 'Hogar',
-      priority: 'critico' as const,
-      spendCategory: null as null,
+      spendCategory: 'supervivencia' as const,
       parentId: null,
       emoji: '🏠',
       notes: null,

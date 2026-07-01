@@ -51,15 +51,11 @@ export interface Wallet {
   updatedAt: string
 }
 
-export type EnvelopePriority = 'critico' | 'importante' | 'flexible'
-
 export interface Envelope {
   id: string
   userId: string
   parentId: string | null
   name: string
-  category: string
-  priority: EnvelopePriority
   spendCategory: SpendingType | null
   emoji: string | null
   isActive: boolean

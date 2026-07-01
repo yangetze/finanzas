@@ -35,8 +35,6 @@ const ENVELOPE: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Suscripciones',
-  category: 'Digital',
-  priority: 'flexible',
   spendCategory: null,
   emoji: null,
   isActive: true,

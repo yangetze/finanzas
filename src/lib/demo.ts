@@ -40,27 +40,27 @@ async function setupDemoAccount(userId: string): Promise<void> {
 
   const { data: hogar } = await supabase
     .from('envelopes')
-    .insert({ user_id: userId, name: 'Hogar', category: 'hogar', priority: 'critico', emoji: '🏠', sort_order: 1 })
+    .insert({ user_id: userId, name: 'Hogar', spend_category: 'supervivencia', emoji: '🏠', sort_order: 1 })
     .select()
     .single()
 
   if (hogar) {
     await supabase.from('envelopes').insert([
-      { user_id: userId, parent_id: hogar.id, name: 'Internet', category: 'hogar', priority: 'critico', emoji: '📡', sort_order: 1 },
-      { user_id: userId, parent_id: hogar.id, name: 'Condominio', category: 'hogar', priority: 'critico', emoji: '🏢', sort_order: 2 },
+      { user_id: userId, parent_id: hogar.id, name: 'Internet', spend_category: 'supervivencia', emoji: '📡', sort_order: 1 },
+      { user_id: userId, parent_id: hogar.id, name: 'Condominio', spend_category: 'supervivencia', emoji: '🏢', sort_order: 2 },
     ])
   }
 
   const { data: comida } = await supabase
     .from('envelopes')
-    .insert({ user_id: userId, name: 'Comida', category: 'alimentacion', priority: 'critico', emoji: '🍕', sort_order: 2 })
+    .insert({ user_id: userId, name: 'Comida', spend_category: 'supervivencia', emoji: '🍕', sort_order: 2 })
     .select()
     .single()
 
   if (comida) {
     await supabase.from('envelopes').insert([
-      { user_id: userId, parent_id: comida.id, name: 'Mercado', category: 'alimentacion', priority: 'critico', emoji: '🛒', sort_order: 1 },
-      { user_id: userId, parent_id: comida.id, name: 'Comer afuera', category: 'alimentacion', priority: 'flexible', emoji: '🍽️', sort_order: 2 },
+      { user_id: userId, parent_id: comida.id, name: 'Mercado', spend_category: 'supervivencia', emoji: '🛒', sort_order: 1 },
+      { user_id: userId, parent_id: comida.id, name: 'Comer afuera', spend_category: 'flexible', emoji: '🍽️', sort_order: 2 },
     ])
   }
 
