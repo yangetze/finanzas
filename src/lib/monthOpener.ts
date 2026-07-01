@@ -26,7 +26,7 @@ export function buildTransactionFromItem(
     date,
     description: item.name,
     type: 'expense' as const,
-    status: 'apartado' as const,
+    status: 'pendiente' as const,
     envelopeId: item.envelopeId,
     walletId: item.walletId,
     originCurrencyId: item.currencyId,

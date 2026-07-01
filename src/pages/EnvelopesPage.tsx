@@ -6,6 +6,7 @@ import { EnvelopeCard } from '@/components/envelopes/EnvelopeCard'
 import { EnvelopeForm } from '@/components/envelopes/EnvelopeForm'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ScrollAnchor } from '@/components/ui/ScrollAnchor'
 import type { Envelope } from '@/types'
 
 export function EnvelopesPage() {
@@ -17,6 +18,16 @@ export function EnvelopesPage() {
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Envelope | null>(null)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+  function toggleGroup(id: string) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   function handleEdit(envelope: Envelope) {
     setEditing(envelope)
@@ -69,6 +80,7 @@ export function EnvelopesPage() {
 
       {showForm && envelopes && (
         <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+          <ScrollAnchor />
           <h2 className="text-base font-ui font-semibold text-ink mb-4">
             {editing ? 'Editar sobre' : 'Nuevo sobre'}
           </h2>
@@ -93,27 +105,34 @@ export function EnvelopesPage() {
       )}
 
       <div className="flex flex-col gap-2">
-        {groups.map((group) => (
-          <div key={group.id} className="flex flex-col gap-1.5">
-            <EnvelopeCard
-              envelope={group}
-              subCount={subCount(group.id)}
-              onEdit={handleEdit}
-              onDeactivate={(id) => deactivateEnvelope.mutate(id)}
-            />
-            {subs
-              .filter((s) => s.parentId === group.id)
-              .map((sub) => (
-                <EnvelopeCard
-                  key={sub.id}
-                  envelope={sub}
-                  subCount={0}
-                  onEdit={handleEdit}
-                  onDeactivate={(id) => deactivateEnvelope.mutate(id)}
-                />
-              ))}
-          </div>
-        ))}
+        {groups.map((group) => {
+          const count = subCount(group.id)
+          const expanded = expandedGroups.has(group.id)
+          return (
+            <div key={group.id} className="flex flex-col gap-1.5">
+              <EnvelopeCard
+                envelope={group}
+                subCount={count}
+                isExpanded={expanded}
+                onToggle={() => toggleGroup(group.id)}
+                onEdit={handleEdit}
+                onDeactivate={(id) => deactivateEnvelope.mutate(id)}
+              />
+              {expanded &&
+                subs
+                  .filter((s) => s.parentId === group.id)
+                  .map((sub) => (
+                    <EnvelopeCard
+                      key={sub.id}
+                      envelope={sub}
+                      subCount={0}
+                      onEdit={handleEdit}
+                      onDeactivate={(id) => deactivateEnvelope.mutate(id)}
+                    />
+                  ))}
+            </div>
+          )
+        })}
         {subs
           .filter((s) => !groups.find((g) => g.id === s.parentId))
           .map((orphan) => (
