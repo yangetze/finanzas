@@ -11,6 +11,7 @@ const GROUP: Envelope = {
   name: 'Hogar',
   category: 'Hogar',
   priority: 'critico',
+  spendCategory: null,
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,

@@ -11,7 +11,7 @@ const CURRENCY: Currency = {
 
 const ENVELOPE: Envelope = {
   id: 'e1', userId: 'u1', parentId: null, name: 'Ropa', category: 'Personal',
-  priority: 'flexible', emoji: '👔', isActive: true, sortOrder: 1,
+  priority: 'flexible', spendCategory: null, emoji: '👔', isActive: true, sortOrder: 1,
   notes: null, createdAt: '2026-01-01', updatedAt: '2026-01-01',
 }
 

@@ -59,6 +59,7 @@ export interface Envelope {
   name: string
   category: string
   priority: EnvelopePriority
+  spendCategory: SpendingType | null
   emoji: string | null
   isActive: boolean
   sortOrder: number
@@ -78,6 +79,8 @@ export interface BudgetItem {
   name: string
   baseAmount: number
   currencyId: string
+  paymentCurrencyId: string | null
+  referenceRate: number | null
   frequency: BudgetFrequency
   paymentDay: number | null
   startMonth: number | null
@@ -88,7 +91,7 @@ export interface BudgetItem {
   updatedAt: string
 }
 
-export type TransactionStatus = 'apartado' | 'pagado' | 'anulado'
+export type TransactionStatus = 'apartado' | 'pendiente' | 'pagado' | 'anulado'
 export type TransactionType = 'expense' | 'income'
 
 export interface Transaction {
@@ -110,6 +113,7 @@ export interface Transaction {
   baseRate: number | null
   installmentNumber: number | null
   installmentTotal: number | null
+  budgetItemId: string | null
   groupId: string | null
   notes: string | null
   createdAt: string

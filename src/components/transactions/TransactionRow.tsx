@@ -13,6 +13,7 @@ interface TransactionRowProps {
 
 const STATUS_LABELS: Record<Transaction['status'], string> = {
   apartado: 'Apartado',
+  pendiente: 'Pendiente',
   pagado: 'Pagado',
   anulado: 'Anulado',
 }
@@ -29,6 +30,7 @@ export function TransactionRow({ transaction: tx, currency, envelope, onEdit, on
             className={cn(
               'text-xs font-ui px-1.5 py-0.5 rounded',
               tx.status === 'apartado' && 'bg-amber-fin/20 text-amber-fin',
+              tx.status === 'pendiente' && 'bg-coral/20 text-coral',
               tx.status === 'pagado' && 'bg-sage/20 text-sage',
               tx.status === 'anulado' && 'bg-ink-faint/20 text-ink-faint',
             )}

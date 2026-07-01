@@ -27,6 +27,7 @@ function mapTransaction(row: Record<string, unknown>): Transaction {
     baseCurrencyId: row.base_currency_id as string,
     baseAmount: row.base_amount as number,
     baseRate: row.base_rate as number | null,
+    budgetItemId: row.budget_item_id as string | null,
     installmentNumber: row.installment_number as number | null,
     installmentTotal: row.installment_total as number | null,
     groupId: row.group_id as string | null,

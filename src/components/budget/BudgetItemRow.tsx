@@ -14,12 +14,17 @@ interface BudgetItemRowProps {
   item: BudgetItem
   currency: Currency
   spent?: number
+  pending?: number
   onEdit: (item: BudgetItem) => void
   onDeactivate: (id: string) => void
 }
 
-export function BudgetItemRow({ item, currency, spent, onEdit, onDeactivate }: BudgetItemRowProps) {
+export function BudgetItemRow({ item, currency, spent, pending, onEdit, onDeactivate }: BudgetItemRowProps) {
   const hasSpending = spent !== undefined
+  const hasPending = pending !== undefined && pending > 0
+
+  const fmt = (n: number) =>
+    `${currency.symbol} ${n.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   return (
     <div className="flex flex-col gap-1.5 py-2 px-3 hover:bg-canvas-muted transition-colors">
@@ -36,12 +41,16 @@ export function BudgetItemRow({ item, currency, spent, onEdit, onDeactivate }: B
           <div className="text-right">
             {hasSpending && (
               <span className="block text-xs font-mono text-ink-muted">
-                {currency.symbol} {(spent ?? 0).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                {' / '}
+                gastado {fmt(spent ?? 0)}
+              </span>
+            )}
+            {hasPending && (
+              <span className="block text-xs font-mono text-amber-fin">
+                pendiente {fmt(pending)}
               </span>
             )}
             <span className="text-sm font-mono font-semibold text-gold">
-              {currency.symbol} {item.baseAmount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {fmt(item.baseAmount)}
             </span>
             <span className="block text-xs font-ui text-ink-faint">{currency.code}</span>
           </div>
