@@ -28,6 +28,7 @@ export interface UserProfile {
   baseCurrencyId: string | null
   country: string | null
   multiCurrency: boolean
+  isAdmin: boolean
   onboardingDone: boolean
   createdAt: string
   updatedAt: string

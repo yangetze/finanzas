@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { signOut } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -28,9 +29,6 @@ const navItems = [
   { to: '/tasas', label: 'Tasas', icon: TrendingUp },
   { to: '/configuracion', label: 'Config', icon: Settings },
 ]
-
-const primaryMobileNav = navItems.slice(0, 4)
-const secondaryMobileNav = navItems.slice(4)
 
 function NavItem({
   to,
@@ -67,8 +65,14 @@ function NavItem({
 
 export function AppShell() {
   const location = useLocation()
+  const { user } = useAuth()
   const [moreOpen, setMoreOpen] = useState(false)
-  const currentPage = navItems.find((item) => item.to === location.pathname)?.label ?? ''
+
+  const visibleNavItems = navItems.filter((item) => item.to !== '/tasas' || user?.isAdmin)
+  const primaryMobileNav = visibleNavItems.slice(0, 4)
+  const secondaryMobileNav = visibleNavItems.slice(4)
+
+  const currentPage = visibleNavItems.find((item) => item.to === location.pathname)?.label ?? ''
 
   const handleSignOut = async () => {
     await signOut()
@@ -82,7 +86,7 @@ export function AppShell() {
           <span className="font-display italic text-2xl text-gold">sobres.</span>
         </div>
         <nav className="flex-1 px-3 pb-3 flex flex-col gap-1" aria-label="Navegación principal">
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <NavItem key={item.to} {...item} />
           ))}
         </nav>

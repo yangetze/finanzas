@@ -6,6 +6,7 @@ import {
   createTransactionsBatch,
   updateTransaction,
   deleteTransaction,
+  markTransactionPaid,
 } from '@/lib/supabase'
 import type { Transaction } from '@/types'
 
@@ -89,5 +90,17 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: deleteTransaction,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['transactions'] }),
+  })
+}
+
+export function useMarkTransactionPaid() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, walletId, paymentAmount }: { id: string; walletId: string | null; paymentAmount: number }) =>
+      markTransactionPaid(id, walletId, paymentAmount),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['wallets'] })
+    },
   })
 }

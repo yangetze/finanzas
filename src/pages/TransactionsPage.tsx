@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch } from '@/hooks/useTransactions'
+import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch, useMarkTransactionPaid } from '@/hooks/useTransactions'
 import { useBudgetItems } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useWallets } from '@/hooks/useWallets'
@@ -19,9 +19,12 @@ function currentMonth() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
+type TabFilter = 'all' | 'pendiente'
+
 export function TransactionsPage() {
   const { user } = useAuth()
   const [month, setMonth] = useState(currentMonth())
+  const [tab, setTab] = useState<TabFilter>('all')
   const [showForm, setShowForm] = useState(false)
   const [showCashea, setShowCashea] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
@@ -36,6 +39,7 @@ export function TransactionsPage() {
   const updateTx = useUpdateTransaction()
   const deleteTx = useDeleteTransaction()
   const batchCreate = useCreateTransactionsBatch()
+  const markPaid = useMarkTransactionPaid()
 
   const [year, monthNum] = month.split('-').map(Number)
 
@@ -59,7 +63,9 @@ export function TransactionsPage() {
   }
 
   function handleMarkPaid(id: string) {
-    updateTx.mutate({ id, data: { status: 'pagado' } })
+    const tx = transactions?.find((t) => t.id === id)
+    if (!tx) return
+    markPaid.mutate({ id, walletId: tx.walletId, paymentAmount: tx.paymentAmount })
   }
 
   function handleDelete(id: string) {
@@ -76,9 +82,13 @@ export function TransactionsPage() {
     currencyId: string
     amount: number
     originAmount: number
+    conversionRate: number | null
+    paymentCurrencyId: string | null
+    paymentAmount: number
     notes: string | null
   }) {
     const baseCurrencyId = user?.baseCurrencyId ?? values.currencyId
+    const effectivePaymentCurrencyId = values.paymentCurrencyId ?? values.currencyId
     const payload = {
       userId: user!.id,
       date: values.date,
@@ -89,10 +99,11 @@ export function TransactionsPage() {
       walletId: values.walletId,
       originCurrencyId: values.currencyId,
       originAmount: values.originAmount,
-      paymentCurrencyId: values.currencyId,
-      paymentAmount: values.amount,
+      paymentCurrencyId: effectivePaymentCurrencyId,
+      paymentAmount: values.paymentAmount,
+      conversionRate: values.conversionRate,
       baseCurrencyId,
-      baseAmount: values.amount,
+      baseAmount: values.paymentAmount,
     }
     if (editing) {
       updateTx.mutate({ id: editing.id, data: payload }, { onSuccess: handleClose })
@@ -170,6 +181,8 @@ export function TransactionsPage() {
             envelopes={envelopes}
             wallets={wallets}
             currencies={currencies}
+            multiCurrency={user?.multiCurrency}
+            baseCurrencyId={user?.baseCurrencyId ?? undefined}
             initialValues={
               editing
                 ? {
@@ -192,36 +205,64 @@ export function TransactionsPage() {
         </div>
       )}
 
-      {transactions && transactions.length === 0 && !showForm && (
-        <div className="flex flex-col items-center justify-center min-h-48 text-center gap-2">
-          <p className="text-3xl">🧾</p>
-          <p className="text-ink-muted font-ui">Sin transacciones este mes</p>
-          <Button size="sm" variant="ghost" onClick={() => setShowForm(true)}>
-            Agregar gasto
-          </Button>
-        </div>
-      )}
+      <div className="flex gap-1 border-b border-border">
+        {(['all', 'pendiente'] as TabFilter[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-ui transition-colors ${
+              tab === t
+                ? 'text-ink border-b-2 border-gold -mb-px'
+                : 'text-ink-muted hover:text-ink'
+            }`}
+          >
+            {t === 'all' ? 'Todos' : 'Pendientes'}
+          </button>
+        ))}
+      </div>
 
-      {transactions && transactions.length > 0 && (
-        <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
-          {transactions.map((tx, idx) => {
-            const currency = getCurrency(tx.paymentCurrencyId)
-            if (!currency) return null
-            return (
-              <div key={tx.id} className={idx > 0 ? 'border-t border-border' : ''}>
-                <TransactionRow
-                  transaction={tx}
-                  currency={currency}
-                  envelope={getEnvelope(tx.envelopeId)}
-                  onEdit={handleEdit}
-                  onMarkPaid={handleMarkPaid}
-                  onDelete={handleDelete}
-                />
-              </div>
-            )
-          })}
-        </div>
-      )}
+      {(() => {
+        const filtered = transactions?.filter((tx) =>
+          tab === 'pendiente' ? tx.status === 'pendiente' : true,
+        ) ?? []
+
+        if (filtered.length === 0 && !showForm) {
+          return (
+            <div className="flex flex-col items-center justify-center min-h-48 text-center gap-2">
+              <p className="text-3xl">🧾</p>
+              <p className="text-ink-muted font-ui">
+                {tab === 'pendiente' ? 'Sin transacciones pendientes' : 'Sin transacciones este mes'}
+              </p>
+              {tab === 'all' && (
+                <Button size="sm" variant="ghost" onClick={() => setShowForm(true)}>
+                  Agregar gasto
+                </Button>
+              )}
+            </div>
+          )
+        }
+
+        return filtered.length > 0 ? (
+          <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
+            {filtered.map((tx, idx) => {
+              const currency = getCurrency(tx.paymentCurrencyId)
+              if (!currency) return null
+              return (
+                <div key={tx.id} className={idx > 0 ? 'border-t border-border' : ''}>
+                  <TransactionRow
+                    transaction={tx}
+                    currency={currency}
+                    envelope={getEnvelope(tx.envelopeId)}
+                    onEdit={handleEdit}
+                    onMarkPaid={handleMarkPaid}
+                    onDelete={handleDelete}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        ) : null
+      })()}
     </div>
   )
 }

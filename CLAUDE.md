@@ -44,6 +44,21 @@ Write the test FIRST. Watch it fail. Then implement.
 4. Commit after each completed task group
 5. Create next sprint plan before ending current one
 
+## Database Migrations
+- Migration files live in `supabase/migrations/`
+- Naming format: `NNN_sprint<XX>_<short_description>.sql` (e.g. `008_sprint07_admin_rates.sql`)
+- Every migration file MUST start with a comment block documenting:
+  - What the migration does
+  - Why it was needed (feature/sprint context)
+  - Which tables/columns are affected
+- Example header:
+  ```sql
+  -- Migration: 008_sprint07_admin_rates
+  -- Sprint: 07 — Admin exchange rates & is_admin flag
+  -- Adds is_admin boolean to users; sets admin for yangetze+ro@gmail.com
+  -- Affected tables: users
+  ```
+
 ## Commit Style
 ```
 feat: add magic link login flow
