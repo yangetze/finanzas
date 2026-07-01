@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useBudgetItems, useCreateBudgetItem, useUpdateBudgetItem, useDeactivateBudgetItem } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { useWallets } from '@/hooks/useWallets'
 import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
 import { useEnvelopePending } from '@/hooks/useEnvelopePending'
 import { useStampMonth } from '@/hooks/useStampMonth'
@@ -31,6 +32,7 @@ export function BudgetPage() {
   const { data: items, isLoading: itemsLoading } = useBudgetItems(user?.id)
   const { data: envelopes, isLoading: envsLoading } = useEnvelopes(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
+  const { data: wallets } = useWallets(user?.id)
   const { data: spending } = useEnvelopeSpending(user?.id, month)
   const { data: pendingData } = useEnvelopePending(user?.id, month)
   const createItem = useCreateBudgetItem()
@@ -74,6 +76,7 @@ export function BudgetPage() {
     referenceRate: number | null
     frequency: BudgetItem['frequency']
     spendingType: BudgetItem['spendingType']
+    walletId: string | null
     paymentDay: number | null
     notes: string | null
   }) {
@@ -161,6 +164,7 @@ export function BudgetPage() {
           <BudgetForm
             envelopes={envelopes}
             currencies={currencies}
+            wallets={wallets ?? []}
             multiCurrency={user?.multiCurrency}
             initialValues={
               editing
@@ -173,6 +177,7 @@ export function BudgetPage() {
                     referenceRate: editing.referenceRate,
                     frequency: editing.frequency,
                     spendingType: editing.spendingType,
+                    walletId: editing.walletId,
                     paymentDay: editing.paymentDay,
                     notes: editing.notes,
                   }
