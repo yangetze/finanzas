@@ -82,7 +82,7 @@ describe('buildTransactionFromItem', () => {
     expect(tx.date).toBe('2026-06-10')
     expect(tx.description).toBe('Netflix')
     expect(tx.type).toBe('expense')
-    expect(tx.status).toBe('apartado')
+    expect(tx.status).toBe('pendiente')
     expect(tx.originAmount).toBe(15)
     expect(tx.envelopeId).toBe('e1')
     expect(tx.walletId).toBe('w1')

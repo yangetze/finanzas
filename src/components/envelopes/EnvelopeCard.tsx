@@ -1,4 +1,4 @@
-import { Pencil, PowerOff } from 'lucide-react'
+import { ChevronDown, Pencil, PowerOff } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
@@ -19,17 +19,25 @@ const SPEND_COLORS: Record<SpendingType, string> = {
 interface EnvelopeCardProps {
   envelope: Envelope
   subCount: number
+  isExpanded?: boolean
+  onToggle?: () => void
   onEdit: (envelope: Envelope) => void
   onDeactivate: (id: string) => void
 }
 
-export function EnvelopeCard({ envelope, subCount, onEdit, onDeactivate }: EnvelopeCardProps) {
+export function EnvelopeCard({ envelope, subCount, isExpanded, onToggle, onEdit, onDeactivate }: EnvelopeCardProps) {
   const isGroup = envelope.parentId === null
+  const collapsible = isGroup && subCount > 0
 
   return (
     <Card padding="sm" className={cn('flex flex-col gap-2', !isGroup && 'ml-4 border-l-2 border-gold/20')}>
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <button
+          className={cn('flex items-center gap-2 flex-1 min-w-0 text-left', collapsible ? 'cursor-pointer' : 'cursor-default')}
+          onClick={collapsible ? onToggle : undefined}
+          aria-expanded={collapsible ? isExpanded : undefined}
+          type="button"
+        >
           {envelope.emoji && (
             <span className="text-lg shrink-0">{envelope.emoji}</span>
           )}
@@ -46,7 +54,13 @@ export function EnvelopeCard({ envelope, subCount, onEdit, onDeactivate }: Envel
               )}
             </div>
           </div>
-        </div>
+          {collapsible && (
+            <ChevronDown
+              size={14}
+              className={cn('shrink-0 text-ink-muted transition-transform ml-auto', isExpanded && 'rotate-180')}
+            />
+          )}
+        </button>
         <div className="flex gap-1 shrink-0">
           <Button variant="ghost" size="sm" onClick={() => onEdit(envelope)} aria-label="Editar">
             <Pencil size={13} />

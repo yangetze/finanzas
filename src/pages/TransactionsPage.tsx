@@ -12,6 +12,7 @@ import { CasheaForm } from '@/components/transactions/CasheaForm'
 import { MonthOpener } from '@/components/budget/MonthOpener'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ScrollAnchor } from '@/components/ui/ScrollAnchor'
 import type { Transaction } from '@/types'
 
 function currentMonth() {
@@ -156,6 +157,7 @@ export function TransactionsPage() {
 
       {showCashea && envelopes && wallets && currencies && (
         <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+          <ScrollAnchor />
           <h2 className="text-base font-ui font-semibold text-ink mb-4">Compra en cuotas (Cashea)</h2>
           <CasheaForm
             envelopes={envelopes}
@@ -174,6 +176,7 @@ export function TransactionsPage() {
 
       {showForm && envelopes && wallets && currencies && (
         <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+          <ScrollAnchor />
           <h2 className="text-base font-ui font-semibold text-ink mb-4">
             {editing ? 'Editar gasto' : 'Nuevo gasto'}
           </h2>
