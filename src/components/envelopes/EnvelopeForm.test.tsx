@@ -54,11 +54,26 @@ describe('EnvelopeForm', () => {
       name: 'Hogar',
       category: 'Hogar',
       priority: 'critico' as const,
+      spendCategory: null as null,
       parentId: null,
       emoji: '🏠',
       notes: null,
     }
     render(<EnvelopeForm envelopes={ENVELOPES} initialValues={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />)
     expect((screen.getByLabelText(/nombre/i) as HTMLInputElement).value).toBe('Hogar')
+  })
+
+  it('shows spend category selector', () => {
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByLabelText(/categoría de gasto/i)).toBeInTheDocument()
+  })
+
+  it('includes spendCategory in submitted values', async () => {
+    const onSubmit = vi.fn()
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'Ahorro')
+    await userEvent.selectOptions(screen.getByLabelText(/categoría de gasto/i), 'crecimiento')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ spendCategory: 'crecimiento' }))
   })
 })

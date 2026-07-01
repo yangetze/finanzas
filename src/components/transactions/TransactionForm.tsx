@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
+import { getLatestExchangeRate } from '@/lib/supabase'
 import type { Envelope, Wallet, Currency, Transaction } from '@/types'
 
 const today = () => new Date().toISOString().split('T')[0]
@@ -16,6 +17,9 @@ interface TransactionFormValues {
   currencyId: string
   amount: number
   originAmount: number
+  conversionRate: number | null
+  paymentCurrencyId: string | null
+  paymentAmount: number
   notes: string | null
 }
 
@@ -35,6 +39,8 @@ interface TransactionFormProps {
   envelopes: Envelope[]
   wallets: Wallet[]
   currencies: Currency[]
+  multiCurrency?: boolean
+  baseCurrencyId?: string
   initialValues?: TransactionFormInitial
   onSubmit: (values: TransactionFormValues) => void
   onCancel: () => void
@@ -57,6 +63,8 @@ export function TransactionForm({
   envelopes,
   wallets,
   currencies,
+  multiCurrency = false,
+  baseCurrencyId,
   initialValues,
   onSubmit,
   onCancel,
@@ -71,7 +79,21 @@ export function TransactionForm({
   const [currencyId, setCurrencyId] = useState(initialValues?.currencyId ?? (currencies[0]?.id ?? ''))
   const [amount, setAmount] = useState(initialValues?.amount != null ? String(initialValues.amount) : '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
+  const [exchangeRate, setExchangeRate] = useState('')
   const [descriptionError, setDescriptionError] = useState('')
+
+  const selectedCurrency = currencies.find((c) => c.id === currencyId)
+  const isFiatOrigin = multiCurrency && selectedCurrency?.type === 'fiat' && currencyId !== baseCurrencyId
+
+  useEffect(() => {
+    if (!isFiatOrigin || !baseCurrencyId) {
+      setExchangeRate('')
+      return
+    }
+    getLatestExchangeRate(currencyId, baseCurrencyId).then((rate) => {
+      if (rate != null) setExchangeRate(String(rate))
+    })
+  }, [isFiatOrigin, currencyId, baseCurrencyId])
 
   const envelopeOptions = [
     { value: NONE, label: 'Sin sobre' },
@@ -91,6 +113,8 @@ export function TransactionForm({
     }
     setDescriptionError('')
     const parsedAmount = amount !== '' ? Number(amount) : 0
+    const parsedRate = exchangeRate !== '' ? Number(exchangeRate) : null
+    const paymentAmount = isFiatOrigin && parsedRate ? parsedAmount / parsedRate : parsedAmount
     onSubmit({
       date,
       description: description.trim(),
@@ -101,6 +125,9 @@ export function TransactionForm({
       currencyId,
       amount: parsedAmount,
       originAmount: parsedAmount,
+      conversionRate: isFiatOrigin ? parsedRate : null,
+      paymentCurrencyId: isFiatOrigin ? (baseCurrencyId ?? null) : null,
+      paymentAmount,
       notes: notes.trim() || null,
     })
   }
@@ -176,6 +203,31 @@ export function TransactionForm({
           />
         </div>
       </div>
+
+      {isFiatOrigin && (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <Input
+              label={`Tasa (${selectedCurrency?.code ?? ''}/${currencies.find((c) => c.id === baseCurrencyId)?.code ?? ''})`}
+              type="number"
+              step="0.01"
+              min={0}
+              value={exchangeRate}
+              onChange={(e) => setExchangeRate(e.target.value)}
+              placeholder="0.00"
+            />
+          </div>
+          {exchangeRate && Number(exchangeRate) > 0 && (
+            <div className="flex-1 flex flex-col justify-end pb-1">
+              <span className="text-xs text-ink-muted font-ui mb-1">Equivale a</span>
+              <span className="text-sm font-ui text-ink">
+                {(Number(amount || 0) / Number(exchangeRate)).toFixed(2)}{' '}
+                {currencies.find((c) => c.id === baseCurrencyId)?.code}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       <Input
         label="Notas"

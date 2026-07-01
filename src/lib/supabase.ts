@@ -36,6 +36,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     baseCurrencyId: data.base_currency_id,
     country: data.country,
     multiCurrency: data.multi_currency,
+    isAdmin: data.is_admin ?? false,
     onboardingDone: data.onboarding_done,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
@@ -536,6 +537,39 @@ export async function stampMonth(params: {
   }))
   const { error } = await supabase.from('transactions').insert(rows)
   if (error) throw error
+}
+
+export async function markTransactionPaid(
+  id: string,
+  walletId: string | null,
+  paymentAmount: number,
+) {
+  await updateTransaction(id, { status: 'pagado' })
+  if (walletId) {
+    const { data } = await supabase
+      .from('wallets')
+      .select('balance')
+      .eq('id', walletId)
+      .single()
+    if (data) {
+      await updateWallet(walletId, { balance: data.balance - paymentAmount })
+    }
+  }
+}
+
+export async function getLatestExchangeRate(
+  fromCurrencyId: string,
+  toCurrencyId: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('exchange_rates')
+    .select('rate')
+    .eq('from_currency_id', fromCurrencyId)
+    .eq('to_currency_id', toCurrencyId)
+    .order('rate_date', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  return data?.rate ?? null
 }
 
 export async function upsertExchangeRate(data: {

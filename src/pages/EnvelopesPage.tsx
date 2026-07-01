@@ -32,6 +32,7 @@ export function EnvelopesPage() {
     name: string
     category: string
     priority: Envelope['priority']
+    spendCategory: Envelope['spendCategory']
     parentId: string | null
     emoji: string | null
     notes: string | null

@@ -4,6 +4,10 @@ import userEvent from '@testing-library/user-event'
 import { TransactionForm } from './TransactionForm'
 import type { Envelope, Wallet, Currency } from '@/types'
 
+vi.mock('@/lib/supabase', () => ({
+  getLatestExchangeRate: vi.fn().mockResolvedValue(36),
+}))
+
 const CURRENCY: Currency = {
   id: 'c1',
   code: 'USDC',
@@ -12,6 +16,17 @@ const CURRENCY: Currency = {
   type: 'stable',
   isActive: true,
   sortOrder: 1,
+  createdAt: '2026-01-01',
+}
+
+const FIAT_CURRENCY: Currency = {
+  id: 'c2',
+  code: 'VES',
+  name: 'Bolívar',
+  symbol: 'Bs.',
+  type: 'fiat',
+  isActive: true,
+  sortOrder: 2,
   createdAt: '2026-01-01',
 }
 
@@ -114,6 +129,23 @@ describe('TransactionForm', () => {
     )
     await user.click(screen.getByRole('button', { name: /cancelar/i }))
     expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows rate field when multiCurrency and fiat currency is selected', async () => {
+    const user = userEvent.setup()
+    render(
+      <TransactionForm
+        envelopes={[ENVELOPE]}
+        wallets={[WALLET]}
+        currencies={[CURRENCY, FIAT_CURRENCY]}
+        multiCurrency
+        baseCurrencyId="c1"
+        onSubmit={noop}
+        onCancel={noop}
+      />,
+    )
+    await user.selectOptions(screen.getByLabelText(/moneda/i), 'c2')
+    expect(await screen.findByLabelText(/tasa/i)).toBeInTheDocument()
   })
 
   it('pre-fills values when initialValues provided', () => {
