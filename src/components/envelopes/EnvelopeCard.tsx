@@ -2,18 +2,18 @@ import { Pencil, PowerOff } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
-import type { Envelope } from '@/types'
+import type { Envelope, SpendingType } from '@/types'
 
-const PRIORITY_LABELS: Record<Envelope['priority'], string> = {
-  critico: 'Crítico',
-  importante: 'Importante',
+const SPEND_LABELS: Record<SpendingType, string> = {
+  supervivencia: 'Supervivencia',
   flexible: 'Flexible',
+  crecimiento: 'Crecimiento',
 }
 
-const PRIORITY_COLORS: Record<Envelope['priority'], string> = {
-  critico: 'bg-coral/20 text-coral',
-  importante: 'bg-amber-fin/20 text-amber-fin',
-  flexible: 'bg-sage/20 text-sage',
+const SPEND_COLORS: Record<SpendingType, string> = {
+  supervivencia: 'bg-coral/20 text-coral',
+  flexible: 'bg-amber-fin/20 text-amber-fin',
+  crecimiento: 'bg-gold/20 text-gold',
 }
 
 interface EnvelopeCardProps {
@@ -36,9 +36,11 @@ export function EnvelopeCard({ envelope, subCount, onEdit, onDeactivate }: Envel
           <div className="flex flex-col gap-0.5 min-w-0">
             <span className="text-sm font-ui font-semibold text-ink truncate">{envelope.name}</span>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={cn('text-xs font-ui px-1.5 py-0.5 rounded', PRIORITY_COLORS[envelope.priority])}>
-                {PRIORITY_LABELS[envelope.priority]}
-              </span>
+              {envelope.spendCategory && (
+                <span className={cn('text-xs font-ui px-1.5 py-0.5 rounded', SPEND_COLORS[envelope.spendCategory])}>
+                  {SPEND_LABELS[envelope.spendCategory]}
+                </span>
+              )}
               {isGroup && subCount > 0 && (
                 <span className="text-xs font-ui text-ink-faint">{subCount} sub-sobre{subCount !== 1 ? 's' : ''}</span>
               )}

@@ -165,8 +165,6 @@ export async function getEnvelopes(userId: string) {
 export async function createEnvelope(data: {
   userId: string
   name: string
-  category: string
-  priority: 'critico' | 'importante' | 'flexible'
   spendCategory?: 'supervivencia' | 'flexible' | 'crecimiento' | null
   parentId?: string | null
   emoji?: string | null
@@ -176,8 +174,6 @@ export async function createEnvelope(data: {
   const { error } = await supabase.from('envelopes').insert({
     user_id: data.userId,
     name: data.name,
-    category: data.category,
-    priority: data.priority,
     spend_category: data.spendCategory ?? null,
     parent_id: data.parentId ?? null,
     emoji: data.emoji ?? null,
@@ -191,8 +187,6 @@ export async function updateEnvelope(
   id: string,
   data: Partial<{
     name: string
-    category: string
-    priority: 'critico' | 'importante' | 'flexible'
     spendCategory: 'supervivencia' | 'flexible' | 'crecimiento' | null
     parentId: string | null
     emoji: string | null
@@ -202,8 +196,6 @@ export async function updateEnvelope(
 ) {
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (data.name !== undefined) updates.name = data.name
-  if (data.category !== undefined) updates.category = data.category
-  if (data.priority !== undefined) updates.priority = data.priority
   if (data.spendCategory !== undefined) updates.spend_category = data.spendCategory
   if (data.parentId !== undefined) updates.parent_id = data.parentId
   if (data.emoji !== undefined) updates.emoji = data.emoji

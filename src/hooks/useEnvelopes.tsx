@@ -8,8 +8,6 @@ function mapEnvelope(row: Record<string, unknown>): Envelope {
     userId: row.user_id as string,
     parentId: row.parent_id as string | null,
     name: row.name as string,
-    category: row.category as string,
-    priority: row.priority as Envelope['priority'],
     spendCategory: (row.spend_category as Envelope['spendCategory']) ?? null,
     emoji: row.emoji as string | null,
     isActive: row.is_active as boolean,

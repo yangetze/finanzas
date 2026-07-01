@@ -24,8 +24,6 @@ const MOCK_ROW = {
   user_id: 'u1',
   parent_id: null,
   name: 'Hogar',
-  category: 'Hogar',
-  priority: 'critico',
   spend_category: null,
   emoji: '🏠',
   is_active: true,
@@ -40,8 +38,6 @@ const MOCK_ENVELOPE = {
   userId: 'u1',
   parentId: null,
   name: 'Hogar',
-  category: 'Hogar',
-  priority: 'critico',
   spendCategory: null,
   emoji: '🏠',
   isActive: true,
@@ -77,7 +73,7 @@ describe('useCreateEnvelope', () => {
   it('calls createEnvelope', async () => {
     mockCreateEnvelope.mockResolvedValue(undefined)
     const { result } = renderHook(() => useCreateEnvelope(), { wrapper })
-    result.current.mutate({ userId: 'u1', name: 'Hogar', category: 'Hogar', priority: 'critico' })
+    result.current.mutate({ userId: 'u1', name: 'Hogar' })
     await waitFor(() => expect(mockCreateEnvelope).toHaveBeenCalledTimes(1))
   })
 })

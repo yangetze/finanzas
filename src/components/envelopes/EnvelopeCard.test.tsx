@@ -9,9 +9,7 @@ const GROUP: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Hogar',
-  category: 'Hogar',
-  priority: 'critico',
-  spendCategory: null,
+  spendCategory: 'supervivencia',
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,
@@ -35,9 +33,15 @@ describe('EnvelopeCard', () => {
     expect(screen.getByText('🏠')).toBeInTheDocument()
   })
 
-  it('renders priority badge', () => {
+  it('renders spend category badge', () => {
     render(<EnvelopeCard envelope={GROUP} subCount={0} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
-    expect(screen.getByText(/crítico/i)).toBeInTheDocument()
+    expect(screen.getByText(/supervivencia/i)).toBeInTheDocument()
+  })
+
+  it('does not render badge when spendCategory is null', () => {
+    const noCategory = { ...GROUP, spendCategory: null as null }
+    render(<EnvelopeCard envelope={noCategory} subCount={0} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
+    expect(screen.queryByText(/supervivencia|flexible|crecimiento/i)).not.toBeInTheDocument()
   })
 
   it('shows sub-envelope count for group envelopes', () => {

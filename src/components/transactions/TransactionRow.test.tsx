@@ -20,8 +20,6 @@ const ENVELOPE: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Netflix',
-  category: 'Suscripciones',
-  priority: 'flexible',
   spendCategory: null,
   emoji: '📱',
   isActive: true,

@@ -30,8 +30,6 @@ export function EnvelopesPage() {
 
   function handleSubmit(values: {
     name: string
-    category: string
-    priority: Envelope['priority']
     spendCategory: Envelope['spendCategory']
     parentId: string | null
     emoji: string | null
