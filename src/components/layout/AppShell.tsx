@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -10,6 +11,8 @@ import {
   TrendingUp,
   Settings,
   LogOut,
+  MoreHorizontal,
+  X,
 } from 'lucide-react'
 import { signOut } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -26,22 +29,26 @@ const navItems = [
   { to: '/configuracion', label: 'Config', icon: Settings },
 ]
 
-const mobileNavItems = navItems.slice(0, 5)
+const primaryMobileNav = navItems.slice(0, 4)
+const secondaryMobileNav = navItems.slice(4)
 
 function NavItem({
   to,
   label,
   icon: Icon,
   compact = false,
+  onClick,
 }: {
   to: string
   label: string
   icon: React.ElementType
   compact?: boolean
+  onClick?: () => void
 }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-ui transition-colors',
@@ -60,6 +67,7 @@ function NavItem({
 
 export function AppShell() {
   const location = useLocation()
+  const [moreOpen, setMoreOpen] = useState(false)
   const currentPage = navItems.find((item) => item.to === location.pathname)?.label ?? ''
 
   const handleSignOut = async () => {
@@ -99,7 +107,7 @@ export function AppShell() {
       </header>
 
       {/* Main content */}
-      <main className="md:ml-56 min-h-screen pb-16 md:pb-0">
+      <main className="md:ml-56 min-h-screen pb-20 md:pb-0">
         <div className="max-w-5xl mx-auto px-4 py-6 md:px-6">
           <Outlet />
         </div>
@@ -111,11 +119,61 @@ export function AppShell() {
         aria-label="Navegación móvil"
       >
         <div className="flex items-center justify-around px-2 py-1">
-          {mobileNavItems.map((item) => (
+          {primaryMobileNav.map((item) => (
             <NavItem key={item.to} {...item} compact />
           ))}
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={cn(
+              'flex flex-col items-center gap-0.5 px-2 py-2 rounded-lg text-xs font-ui transition-colors',
+              moreOpen ? 'text-ink' : 'text-ink-muted hover:text-ink',
+            )}
+            aria-label="Más opciones"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span>Más</span>
+          </button>
         </div>
       </nav>
+
+      {/* Mobile "Más" slide-up panel */}
+      {moreOpen && (
+        <>
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-20"
+            onClick={() => setMoreOpen(false)}
+          />
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-canvas-soft rounded-t-2xl border-t border-border pb-safe">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <span className="text-sm font-ui font-semibold text-ink-muted uppercase tracking-wide">
+                Más opciones
+              </span>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="p-1 rounded-lg text-ink-muted hover:text-ink transition-colors"
+                aria-label="Cerrar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <nav className="px-3 pb-3 flex flex-col gap-1">
+              {secondaryMobileNav.map((item) => (
+                <NavItem key={item.to} {...item} onClick={() => setMoreOpen(false)} />
+              ))}
+              <div className="border-t border-border mt-2 pt-2">
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-ink-muted hover:text-coral hover:bg-coral/10 transition-colors font-ui"
+                  aria-label="Cerrar sesión"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Salir</span>
+                </button>
+              </div>
+            </nav>
+          </div>
+        </>
+      )}
     </div>
   )
 }
