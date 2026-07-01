@@ -22,6 +22,7 @@ const ENVELOPE: Envelope = {
   name: 'Suscripciones',
   category: 'Digital',
   priority: 'flexible',
+  spendCategory: null,
   emoji: null,
   isActive: true,
   sortOrder: 1,

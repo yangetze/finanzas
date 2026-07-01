@@ -9,6 +9,8 @@ interface BudgetFormValues {
   envelopeId: string
   currencyId: string
   baseAmount: number
+  paymentCurrencyId: string | null
+  referenceRate: number | null
   frequency: BudgetItem['frequency']
   spendingType: BudgetItem['spendingType']
   paymentDay: number | null
@@ -20,6 +22,8 @@ interface BudgetFormInitial {
   envelopeId: string
   currencyId: string
   baseAmount: number
+  paymentCurrencyId: string | null
+  referenceRate: number | null
   frequency: BudgetItem['frequency']
   spendingType: BudgetItem['spendingType']
   paymentDay: number | null
@@ -29,6 +33,7 @@ interface BudgetFormInitial {
 interface BudgetFormProps {
   envelopes: Envelope[]
   currencies: Currency[]
+  multiCurrency?: boolean
   initialValues?: BudgetFormInitial
   onSubmit: (values: BudgetFormValues) => void
   onCancel: () => void
@@ -48,11 +53,13 @@ const SPENDING_TYPE_OPTIONS = [
   { value: 'crecimiento', label: 'Crecimiento — opcional' },
 ]
 
-export function BudgetForm({ envelopes, currencies, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
+export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
   const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? (envelopes[0]?.id ?? ''))
   const [currencyId, setCurrencyId] = useState(initialValues?.currencyId ?? (currencies[0]?.id ?? ''))
   const [baseAmount, setBaseAmount] = useState(initialValues?.baseAmount != null ? String(initialValues.baseAmount) : '')
+  const [paymentCurrencyId, setPaymentCurrencyId] = useState<string>(initialValues?.paymentCurrencyId ?? '')
+  const [referenceRate, setReferenceRate] = useState(initialValues?.referenceRate != null ? String(initialValues.referenceRate) : '')
   const [frequency, setFrequency] = useState<BudgetItem['frequency']>(initialValues?.frequency ?? 'monthly')
   const [spendingType, setSpendingType] = useState<BudgetItem['spendingType']>(initialValues?.spendingType ?? 'supervivencia')
   const [paymentDay, setPaymentDay] = useState(initialValues?.paymentDay != null ? String(initialValues.paymentDay) : '')
@@ -64,6 +71,12 @@ export function BudgetForm({ envelopes, currencies, initialValues, onSubmit, onC
     label: `${e.emoji ? e.emoji + ' ' : ''}${e.name}`,
   }))
   const currencyOptions = currencies.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
+  const paymentCurrencyOptions = [
+    { value: '', label: 'Misma que presupuesto' },
+    ...currencies.filter((c) => c.type === 'fiat').map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+  ]
+
+  const showReferenceRate = multiCurrency && paymentCurrencyId !== '' && paymentCurrencyId !== currencyId
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -77,6 +90,8 @@ export function BudgetForm({ envelopes, currencies, initialValues, onSubmit, onC
       envelopeId,
       currencyId,
       baseAmount: baseAmount !== '' ? Number(baseAmount) : 0,
+      paymentCurrencyId: paymentCurrencyId !== '' ? paymentCurrencyId : null,
+      referenceRate: showReferenceRate && referenceRate !== '' ? Number(referenceRate) : null,
       frequency,
       spendingType,
       paymentDay: paymentDay !== '' ? Number(paymentDay) : null,
@@ -122,6 +137,27 @@ export function BudgetForm({ envelopes, currencies, initialValues, onSubmit, onC
           />
         </div>
       </div>
+
+      {multiCurrency && (
+        <Select
+          label="Moneda de pago"
+          options={paymentCurrencyOptions}
+          value={paymentCurrencyId}
+          onChange={(e) => setPaymentCurrencyId(e.target.value)}
+        />
+      )}
+
+      {showReferenceRate && (
+        <Input
+          label="Tasa de referencia"
+          type="number"
+          step="0.01"
+          min={0}
+          value={referenceRate}
+          onChange={(e) => setReferenceRate(e.target.value)}
+          placeholder="Ej. 36.5"
+        />
+      )}
 
       <Select
         label="Tipo de gasto"

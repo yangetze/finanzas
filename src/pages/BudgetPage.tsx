@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Stamp } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudgetItems, useCreateBudgetItem, useUpdateBudgetItem, useDeactivateBudgetItem } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useCurrencies } from '@/hooks/useCurrencies'
 import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
+import { useEnvelopePending } from '@/hooks/useEnvelopePending'
+import { useStampMonth } from '@/hooks/useStampMonth'
 import { BudgetItemRow } from '@/components/budget/BudgetItemRow'
 import { BudgetForm } from '@/components/budget/BudgetForm'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import type { BudgetItem } from '@/types'
+import type { BudgetItemStampInput } from '@/lib/stampMonth'
 
 function currentMonth() {
   const d = new Date()
@@ -29,9 +32,11 @@ export function BudgetPage() {
   const { data: envelopes, isLoading: envsLoading } = useEnvelopes(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
   const { data: spending } = useEnvelopeSpending(user?.id, month)
+  const { data: pendingData } = useEnvelopePending(user?.id, month)
   const createItem = useCreateBudgetItem()
   const updateItem = useUpdateBudgetItem()
   const deactivateItem = useDeactivateBudgetItem()
+  const stampMonth = useStampMonth()
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<BudgetItem | null>(null)
@@ -40,6 +45,10 @@ export function BudgetPage() {
 
   function getSpent(envelopeId: string) {
     return spending?.find((s) => s.envelopeId === envelopeId)?.spent
+  }
+
+  function getPending(envelopeId: string) {
+    return pendingData?.find((p) => p.envelopeId === envelopeId)?.pending
   }
 
   function getCurrency(currencyId: string) {
@@ -61,6 +70,8 @@ export function BudgetPage() {
     envelopeId: string
     currencyId: string
     baseAmount: number
+    paymentCurrencyId: string | null
+    referenceRate: number | null
     frequency: BudgetItem['frequency']
     spendingType: BudgetItem['spendingType']
     paymentDay: number | null
@@ -71,6 +82,29 @@ export function BudgetPage() {
     } else {
       createItem.mutate({ userId: user!.id, ...values }, { onSuccess: handleClose })
     }
+  }
+
+  function handleStampMonth() {
+    if (!user?.baseCurrencyId || !items) return
+    const stampInputs: BudgetItemStampInput[] = items.map((item) => ({
+      id: item.id,
+      envelopeId: item.envelopeId,
+      walletId: item.walletId,
+      name: item.name,
+      baseAmount: item.baseAmount,
+      currencyId: item.currencyId,
+      paymentCurrencyId: item.paymentCurrencyId,
+      referenceRate: item.referenceRate,
+      paymentDay: item.paymentDay,
+      frequency: item.frequency,
+      startMonth: item.startMonth,
+    }))
+    stampMonth.mutate({
+      userId: user.id,
+      baseCurrencyId: user.baseCurrencyId,
+      yearMonth: month,
+      items: stampInputs,
+    })
   }
 
   if (isLoading) {
@@ -93,10 +127,24 @@ export function BudgetPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-ui font-semibold text-ink">Presupuesto</h1>
-        <Button size="sm" onClick={() => setShowForm(true)} disabled={!envelopes?.length}>
-          <Plus size={16} />
-          Nuevo
-        </Button>
+        <div className="flex items-center gap-2">
+          {!!items?.length && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleStampMonth}
+              loading={stampMonth.isPending}
+              disabled={!user?.baseCurrencyId}
+            >
+              <Stamp size={16} />
+              Timbrar mes
+            </Button>
+          )}
+          <Button size="sm" onClick={() => setShowForm(true)} disabled={!envelopes?.length}>
+            <Plus size={16} />
+            Nuevo
+          </Button>
+        </div>
       </div>
 
       {!envelopes?.length && !showForm && (
@@ -113,6 +161,7 @@ export function BudgetPage() {
           <BudgetForm
             envelopes={envelopes}
             currencies={currencies}
+            multiCurrency={user?.multiCurrency}
             initialValues={
               editing
                 ? {
@@ -120,6 +169,8 @@ export function BudgetPage() {
                     envelopeId: editing.envelopeId,
                     currencyId: editing.currencyId,
                     baseAmount: editing.baseAmount,
+                    paymentCurrencyId: editing.paymentCurrencyId,
+                    referenceRate: editing.referenceRate,
                     frequency: editing.frequency,
                     spendingType: editing.spendingType,
                     paymentDay: editing.paymentDay,
@@ -170,6 +221,7 @@ export function BudgetPage() {
                         item={item}
                         currency={currency}
                         spent={getSpent(item.envelopeId)}
+                        pending={getPending(item.envelopeId)}
                         onEdit={handleEdit}
                         onDeactivate={(id) => deactivateItem.mutate(id)}
                       />

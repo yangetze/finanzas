@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { UserProfile } from '@/types'
+import type { StampedTransaction } from '@/lib/stampMonth'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -165,6 +166,7 @@ export async function createEnvelope(data: {
   name: string
   category: string
   priority: 'critico' | 'importante' | 'flexible'
+  spendCategory?: 'supervivencia' | 'flexible' | 'crecimiento' | null
   parentId?: string | null
   emoji?: string | null
   notes?: string | null
@@ -175,6 +177,7 @@ export async function createEnvelope(data: {
     name: data.name,
     category: data.category,
     priority: data.priority,
+    spend_category: data.spendCategory ?? null,
     parent_id: data.parentId ?? null,
     emoji: data.emoji ?? null,
     notes: data.notes ?? null,
@@ -189,6 +192,7 @@ export async function updateEnvelope(
     name: string
     category: string
     priority: 'critico' | 'importante' | 'flexible'
+    spendCategory: 'supervivencia' | 'flexible' | 'crecimiento' | null
     parentId: string | null
     emoji: string | null
     notes: string | null
@@ -199,6 +203,7 @@ export async function updateEnvelope(
   if (data.name !== undefined) updates.name = data.name
   if (data.category !== undefined) updates.category = data.category
   if (data.priority !== undefined) updates.priority = data.priority
+  if (data.spendCategory !== undefined) updates.spend_category = data.spendCategory
   if (data.parentId !== undefined) updates.parent_id = data.parentId
   if (data.emoji !== undefined) updates.emoji = data.emoji
   if (data.notes !== undefined) updates.notes = data.notes
@@ -234,6 +239,8 @@ export async function createBudgetItem(data: {
   name: string
   baseAmount: number
   currencyId: string
+  paymentCurrencyId?: string | null
+  referenceRate?: number | null
   frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
   spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
   walletId?: string | null
@@ -247,6 +254,8 @@ export async function createBudgetItem(data: {
     name: data.name,
     base_amount: data.baseAmount,
     currency_id: data.currencyId,
+    payment_currency_id: data.paymentCurrencyId ?? null,
+    reference_rate: data.referenceRate ?? null,
     frequency: data.frequency,
     spending_type: data.spendingType,
     wallet_id: data.walletId ?? null,
@@ -264,6 +273,8 @@ export async function updateBudgetItem(
     name: string
     baseAmount: number
     currencyId: string
+    paymentCurrencyId: string | null
+    referenceRate: number | null
     frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
     spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
     walletId: string | null
@@ -277,6 +288,8 @@ export async function updateBudgetItem(
   if (data.name !== undefined) updates.name = data.name
   if (data.baseAmount !== undefined) updates.base_amount = data.baseAmount
   if (data.currencyId !== undefined) updates.currency_id = data.currencyId
+  if (data.paymentCurrencyId !== undefined) updates.payment_currency_id = data.paymentCurrencyId
+  if (data.referenceRate !== undefined) updates.reference_rate = data.referenceRate
   if (data.frequency !== undefined) updates.frequency = data.frequency
   if (data.spendingType !== undefined) updates.spending_type = data.spendingType
   if (data.walletId !== undefined) updates.wallet_id = data.walletId
@@ -336,9 +349,10 @@ export async function createTransaction(data: {
   date: string
   description: string
   type: 'expense' | 'income'
-  status: 'apartado' | 'pagado'
+  status: 'apartado' | 'pendiente' | 'pagado'
   envelopeId?: string | null
   walletId?: string | null
+  budgetItemId?: string | null
   originCurrencyId: string
   originAmount: number
   paymentCurrencyId: string
@@ -357,6 +371,7 @@ export async function createTransaction(data: {
     status: data.status,
     envelope_id: data.envelopeId ?? null,
     wallet_id: data.walletId ?? null,
+    budget_item_id: data.budgetItemId ?? null,
     origin_currency_id: data.originCurrencyId,
     origin_amount: data.originAmount,
     payment_currency_id: data.paymentCurrencyId,
@@ -379,9 +394,10 @@ export async function createTransactionsBatch(
     date: string
     description: string
     type: 'expense' | 'income'
-    status: 'apartado' | 'pagado'
+    status: 'apartado' | 'pendiente' | 'pagado'
     envelopeId?: string | null
     walletId?: string | null
+    budgetItemId?: string | null
     originCurrencyId: string
     originAmount: number
     paymentCurrencyId: string
@@ -401,6 +417,7 @@ export async function createTransactionsBatch(
     status: t.status,
     envelope_id: t.envelopeId ?? null,
     wallet_id: t.walletId ?? null,
+    budget_item_id: t.budgetItemId ?? null,
     origin_currency_id: t.originCurrencyId,
     origin_amount: t.originAmount,
     payment_currency_id: t.paymentCurrencyId,
@@ -424,9 +441,10 @@ export async function updateTransaction(
     date: string
     description: string
     type: 'expense' | 'income'
-    status: 'apartado' | 'pagado' | 'anulado'
+    status: 'apartado' | 'pendiente' | 'pagado' | 'anulado'
     envelopeId: string | null
     walletId: string | null
+    budgetItemId: string | null
     originCurrencyId: string
     originAmount: number
     paymentCurrencyId: string
@@ -445,6 +463,7 @@ export async function updateTransaction(
   if (data.status !== undefined) updates.status = data.status
   if (data.envelopeId !== undefined) updates.envelope_id = data.envelopeId
   if (data.walletId !== undefined) updates.wallet_id = data.walletId
+  if (data.budgetItemId !== undefined) updates.budget_item_id = data.budgetItemId
   if (data.originCurrencyId !== undefined) updates.origin_currency_id = data.originCurrencyId
   if (data.originAmount !== undefined) updates.origin_amount = data.originAmount
   if (data.paymentCurrencyId !== undefined) updates.payment_currency_id = data.paymentCurrencyId
@@ -475,6 +494,48 @@ export async function getExchangeRates() {
 
   if (error) throw error
   return data
+}
+
+export async function getStampedBudgetItemIds(userId: string, yearMonth: string): Promise<Set<string>> {
+  const rows = await getTransactions(userId, yearMonth)
+  const ids = new Set<string>()
+  for (const row of rows) {
+    if (row.status === 'pendiente' && row.budget_item_id) {
+      ids.add(row.budget_item_id as string)
+    }
+  }
+  return ids
+}
+
+export async function stampMonth(params: {
+  userId: string
+  baseCurrencyId: string
+  transactions: StampedTransaction[]
+}) {
+  const rows = params.transactions.map((tx) => ({
+    user_id: params.userId,
+    date: tx.date,
+    description: tx.description,
+    type: 'expense' as const,
+    status: 'pendiente' as const,
+    envelope_id: tx.envelopeId,
+    wallet_id: tx.walletId ?? null,
+    budget_item_id: tx.budgetItemId,
+    origin_currency_id: tx.originCurrencyId,
+    origin_amount: tx.originAmount,
+    payment_currency_id: tx.paymentCurrencyId,
+    payment_amount: tx.paymentAmount,
+    conversion_rate: tx.conversionRate ?? null,
+    base_currency_id: params.baseCurrencyId,
+    base_amount: tx.paymentAmount,
+    base_rate: null,
+    notes: null,
+    installment_number: null,
+    installment_total: null,
+    group_id: null,
+  }))
+  const { error } = await supabase.from('transactions').insert(rows)
+  if (error) throw error
 }
 
 export async function upsertExchangeRate(data: {

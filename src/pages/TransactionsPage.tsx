@@ -176,7 +176,7 @@ export function TransactionsPage() {
                     date: editing.date,
                     description: editing.description,
                     type: editing.type,
-                    status: editing.status === 'anulado' ? 'apartado' : editing.status,
+                    status: editing.status === 'anulado' || editing.status === 'pendiente' ? 'apartado' : editing.status,
                     envelopeId: editing.envelopeId,
                     walletId: editing.walletId,
                     currencyId: editing.paymentCurrencyId,

@@ -10,6 +10,8 @@ const BASE_ITEM: BudgetItem = {
   name: 'Netflix',
   baseAmount: 15,
   currencyId: 'c-usd',
+  paymentCurrencyId: null,
+  referenceRate: null,
   frequency: 'monthly',
   paymentDay: 10,
   startMonth: null,

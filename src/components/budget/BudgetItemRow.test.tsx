@@ -17,6 +17,8 @@ const ITEM: BudgetItem = {
   name: 'Inter',
   baseAmount: 40,
   currencyId: 'c1',
+  paymentCurrencyId: null,
+  referenceRate: null,
   frequency: 'monthly',
   paymentDay: 15,
   startMonth: null,
@@ -57,5 +59,11 @@ describe('BudgetItemRow', () => {
   it('shows progress bar with spent amount when spent is provided', () => {
     render(<BudgetItemRow item={ITEM} currency={USD} spent={25} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
     expect(screen.getByText(/25,00/)).toBeInTheDocument()
+  })
+
+  it('shows pending amount when pending is provided', () => {
+    render(<BudgetItemRow item={ITEM} currency={USD} pending={40} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
+    expect(screen.getByText(/pendiente/i)).toBeInTheDocument()
+    expect(screen.getByText(/pendiente/i).textContent).toMatch(/40,00/)
   })
 })
