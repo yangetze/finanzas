@@ -71,10 +71,25 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
   const [nameError, setNameError] = useState('')
   const [envelopeError, setEnvelopeError] = useState('')
 
-  const envelopeOptions = [
-    { value: '', label: 'Seleccione un sobre' },
-    ...envelopes.map((e) => ({ value: e.id, label: `${e.emoji ? e.emoji + ' ' : ''}${e.name}` })),
-  ]
+  const parents = envelopes.filter((e) => e.parentId === null)
+  const children = envelopes.filter((e) => e.parentId !== null)
+  const envelopeGroups = parents
+    .map((p) => {
+      const kids = children.filter((c) => c.parentId === p.id)
+      return kids.length > 0
+        ? {
+            label: `${p.emoji ? p.emoji + ' ' : ''}${p.name}`,
+            options: kids.map((c) => ({ value: c.id, label: `${c.emoji ? c.emoji + ' ' : ''}${c.name}` })),
+          }
+        : {
+            label: p.name,
+            options: [{ value: p.id, label: `${p.emoji ? p.emoji + ' ' : ''}${p.name}` }],
+          }
+    })
+  const orphans = children.filter((c) => !parents.find((p) => p.id === c.parentId))
+  if (orphans.length > 0) {
+    envelopeGroups.push({ label: 'Sin grupo', options: orphans.map((e) => ({ value: e.id, label: `${e.emoji ? e.emoji + ' ' : ''}${e.name}` })) })
+  }
 
   function handleEnvelopeChange(id: string) {
     setEnvelopeId(id)
@@ -126,13 +141,33 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
         placeholder="Ej. Inter, Netflix, Mercado"
       />
 
-      <Select
-        label="Sobre"
-        options={envelopeOptions}
-        value={envelopeId}
-        onChange={(e) => handleEnvelopeChange(e.target.value)}
-        error={envelopeError}
-      />
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="envelope-select" className="text-sm font-medium text-ink-muted font-ui">Sobre</label>
+        <select
+          id="envelope-select"
+          value={envelopeId}
+          onChange={(e) => handleEnvelopeChange(e.target.value)}
+          className="w-full bg-canvas-soft border border-border rounded-lg px-3 py-2 text-sm text-ink font-mono focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60"
+        >
+          <option value="">Seleccione un sobre</option>
+          {envelopeGroups.map((group) =>
+            group.options.length === 1 && group.label === group.options[0].label ? (
+              <option key={group.options[0].value} value={group.options[0].value}>
+                {group.options[0].label}
+              </option>
+            ) : (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            )
+          )}
+        </select>
+        {envelopeError && <p className="text-xs text-coral font-ui">{envelopeError}</p>}
+      </div>
 
       <Select
         label="Billetera"

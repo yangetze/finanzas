@@ -6,11 +6,17 @@ interface SelectOption {
   label: string
 }
 
+interface SelectGroup {
+  label: string
+  options: SelectOption[]
+}
+
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
   helper?: string
-  options: SelectOption[]
+  options?: SelectOption[]
+  groups?: SelectGroup[]
   placeholder?: string
 }
 
@@ -18,7 +24,8 @@ export function Select({
   label,
   error,
   helper,
-  options,
+  options = [],
+  groups,
   placeholder,
   className,
   id,
@@ -49,11 +56,21 @@ export function Select({
             {placeholder}
           </option>
         )}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
+        {groups
+          ? groups.map((group) => (
+              <optgroup key={group.label} label={group.label}>
+                {group.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          : options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
       </select>
       {error && <p className="text-xs text-coral font-ui">{error}</p>}
       {helper && !error && <p className="text-xs text-ink-faint font-ui">{helper}</p>}

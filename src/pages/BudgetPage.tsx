@@ -223,30 +223,55 @@ export function BudgetPage() {
               <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
                 {(() => {
                   const envelopeIds = [...new Set(typeItems.map((i) => i.envelopeId))]
-                  return envelopeIds.map((envId, envIdx) => {
-                    const envelope = getEnvelope(envId)
-                    const envItems = typeItems.filter((i) => i.envelopeId === envId)
+                  const parentIds = [...new Set(
+                    envelopeIds.map((id) => getEnvelope(id)?.parentId ?? id)
+                  )]
+
+                  return parentIds.map((parentId, parentIdx) => {
+                    const parentEnv = getEnvelope(parentId)
+                    const childEnvIds = envelopeIds.filter(
+                      (id) => (getEnvelope(id)?.parentId ?? id) === parentId
+                    )
+
                     return (
-                      <div key={envId} className={envIdx > 0 ? 'border-t border-border' : ''}>
-                        <div className="px-3 py-1.5 flex items-center gap-1.5 bg-canvas-muted/50">
-                          {envelope?.emoji && <span className="text-sm">{envelope.emoji}</span>}
+                      <div key={parentId} className={parentIdx > 0 ? 'border-t border-border' : ''}>
+                        <div className="px-3 py-1.5 flex items-center gap-1.5 bg-canvas-muted/70">
+                          {parentEnv?.emoji && <span className="text-sm">{parentEnv.emoji}</span>}
                           <span className="text-xs font-ui font-semibold text-ink-muted uppercase tracking-wide">
-                            {envelope?.name ?? '—'}
+                            {parentEnv?.name ?? '—'}
                           </span>
                         </div>
-                        {envItems.map((item) => {
-                          const currency = getCurrency(item.currencyId)
-                          if (!currency) return null
+                        {childEnvIds.map((childEnvId) => {
+                          const childEnv = getEnvelope(childEnvId)
+                          const childItems = typeItems.filter((i) => i.envelopeId === childEnvId)
+                          const isDirectOnParent = childEnvId === parentId
+
                           return (
-                            <div key={item.id} className={`border-t border-border/60 pl-3`}>
-                              <BudgetItemRow
-                                item={item}
-                                currency={currency}
-                                spent={getSpent(item.envelopeId)}
-                                pending={getPending(item.envelopeId)}
-                                onEdit={handleEdit}
-                                onDeactivate={(id) => deactivateItem.mutate(id)}
-                              />
+                            <div key={childEnvId}>
+                              {!isDirectOnParent && (
+                                <div className="pl-6 pr-3 py-1 flex items-center gap-1.5 border-t border-border/40 bg-canvas-soft">
+                                  {childEnv?.emoji && <span className="text-xs">{childEnv.emoji}</span>}
+                                  <span className="text-xs font-ui text-ink-faint">
+                                    {childEnv?.name ?? '—'}
+                                  </span>
+                                </div>
+                              )}
+                              {childItems.map((item) => {
+                                const currency = getCurrency(item.currencyId)
+                                if (!currency) return null
+                                return (
+                                  <div key={item.id} className="border-t border-border/40">
+                                    <BudgetItemRow
+                                      item={item}
+                                      currency={currency}
+                                      spent={getSpent(item.envelopeId)}
+                                      pending={getPending(item.envelopeId)}
+                                      onEdit={handleEdit}
+                                      onDeactivate={(id) => deactivateItem.mutate(id)}
+                                    />
+                                  </div>
+                                )
+                              })}
                             </div>
                           )
                         })}
