@@ -34,6 +34,24 @@ describe('BudgetForm', () => {
     expect(screen.getByLabelText(/billetera/i)).toBeInTheDocument()
   })
 
+  it('shows placeholder option in envelope select', () => {
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByRole('option', { name: /seleccione un sobre/i })).toBeInTheDocument()
+  })
+
+  it('auto-fills name from envelope when name is empty and envelope is selected', async () => {
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    expect((screen.getByLabelText(/nombre/i) as HTMLInputElement).value).toBe('Hogar')
+  })
+
+  it('does not overwrite name when already filled', async () => {
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'Alquiler')
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    expect((screen.getByLabelText(/nombre/i) as HTMLInputElement).value).toBe('Alquiler')
+  })
+
   it('shows validation error when name is empty', async () => {
     render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
@@ -44,6 +62,8 @@ describe('BudgetForm', () => {
     const onSubmit = vi.fn()
     render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={onSubmit} onCancel={vi.fn()} />)
 
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    await userEvent.clear(screen.getByLabelText(/nombre/i))
     await userEvent.type(screen.getByLabelText(/nombre/i), 'Inter')
     await userEvent.clear(screen.getByLabelText(/monto/i))
     await userEvent.type(screen.getByLabelText(/monto/i), '40')
@@ -59,7 +79,7 @@ describe('BudgetForm', () => {
     const onSubmit = vi.fn()
     render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={onSubmit} onCancel={vi.fn()} />)
 
-    await userEvent.type(screen.getByLabelText(/nombre/i), 'Inter')
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
     await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
 
     expect(onSubmit).toHaveBeenCalledWith(

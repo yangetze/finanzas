@@ -58,7 +58,7 @@ const SPENDING_TYPE_OPTIONS = [
 
 export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
-  const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? (envelopes[0]?.id ?? ''))
+  const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? '')
   const [currencyId, setCurrencyId] = useState(initialValues?.currencyId ?? (currencies[0]?.id ?? ''))
   const [baseAmount, setBaseAmount] = useState(initialValues?.baseAmount != null ? String(initialValues.baseAmount) : '')
   const [paymentCurrencyId, setPaymentCurrencyId] = useState<string>(initialValues?.paymentCurrencyId ?? '')
@@ -69,11 +69,20 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
   const [paymentDay, setPaymentDay] = useState(initialValues?.paymentDay != null ? String(initialValues.paymentDay) : '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [nameError, setNameError] = useState('')
+  const [envelopeError, setEnvelopeError] = useState('')
 
-  const envelopeOptions = envelopes.map((e) => ({
-    value: e.id,
-    label: `${e.emoji ? e.emoji + ' ' : ''}${e.name}`,
-  }))
+  const envelopeOptions = [
+    { value: '', label: 'Seleccione un sobre' },
+    ...envelopes.map((e) => ({ value: e.id, label: `${e.emoji ? e.emoji + ' ' : ''}${e.name}` })),
+  ]
+
+  function handleEnvelopeChange(id: string) {
+    setEnvelopeId(id)
+    if (!name.trim()) {
+      const envelope = envelopes.find((e) => e.id === id)
+      if (envelope) setName(envelope.name)
+    }
+  }
   const currencyOptions = currencies.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
   const paymentCurrencyOptions = [
     { value: '', label: 'Misma que presupuesto' },
@@ -88,11 +97,10 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!name.trim()) {
-      setNameError('El nombre es requerido')
-      return
-    }
-    setNameError('')
+    let valid = true
+    if (!name.trim()) { setNameError('El nombre es requerido'); valid = false } else setNameError('')
+    if (!envelopeId) { setEnvelopeError('Seleccione un sobre'); valid = false } else setEnvelopeError('')
+    if (!valid) return
     onSubmit({
       name: name.trim(),
       envelopeId,
@@ -122,7 +130,8 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
         label="Sobre"
         options={envelopeOptions}
         value={envelopeId}
-        onChange={(e) => setEnvelopeId(e.target.value)}
+        onChange={(e) => handleEnvelopeChange(e.target.value)}
+        error={envelopeError}
       />
 
       <Select
