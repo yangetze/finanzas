@@ -46,6 +46,12 @@ describe('TDCCard', () => {
     expect(screen.getByText(/650,00/)).toBeInTheDocument()
   })
 
+  it('shows negative available when balance exceeds limit', () => {
+    const overLimitWallet = { ...WALLET, balance: 1233.08, creditLimit: 1000 }
+    render(<TDCCard wallet={overLimitWallet} currency={CURRENCY} />)
+    expect(screen.getByText(/- \$ 233,08/)).toBeInTheDocument()
+  })
+
   it('shows no limit text when creditLimit is null', () => {
     const wallet = { ...WALLET, creditLimit: null }
     render(<TDCCard wallet={wallet} currency={CURRENCY} />)
