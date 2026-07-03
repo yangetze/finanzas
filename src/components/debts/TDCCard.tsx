@@ -7,6 +7,13 @@ function fmt(amount: number, symbol: string) {
   return `${symbol} ${Math.abs(amount).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function fmtAvailable(amount: number, symbol: string) {
+  if (amount < 0) {
+    return `- ${symbol} ${Math.abs(amount).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  return fmt(amount, symbol)
+}
+
 interface TDCCardProps {
   wallet: Wallet
   currency: Currency
@@ -47,7 +54,9 @@ export function TDCCard({ wallet, currency }: TDCCardProps) {
           <ProgressBar value={used} max={limit} />
           <div className="flex justify-between text-xs font-ui text-ink-faint">
             <span>Disponible</span>
-            <span className="text-sage font-mono">{fmt(available!, currency.symbol)}</span>
+            <span className={`font-mono ${available! < 0 ? 'text-coral' : 'text-sage'}`}>
+              {fmtAvailable(available!, currency.symbol)}
+            </span>
           </div>
         </>
       )}
