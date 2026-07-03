@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import type { BudgetItem, Envelope, Currency } from '@/types'
+import type { BudgetItem, Envelope, Currency, Wallet } from '@/types'
 
 interface BudgetFormValues {
   name: string
@@ -13,6 +13,7 @@ interface BudgetFormValues {
   referenceRate: number | null
   frequency: BudgetItem['frequency']
   spendingType: BudgetItem['spendingType']
+  walletId: string | null
   paymentDay: number | null
   notes: string | null
 }
@@ -26,6 +27,7 @@ interface BudgetFormInitial {
   referenceRate: number | null
   frequency: BudgetItem['frequency']
   spendingType: BudgetItem['spendingType']
+  walletId: string | null
   paymentDay: number | null
   notes: string | null
 }
@@ -33,6 +35,7 @@ interface BudgetFormInitial {
 interface BudgetFormProps {
   envelopes: Envelope[]
   currencies: Currency[]
+  wallets: Wallet[]
   multiCurrency?: boolean
   initialValues?: BudgetFormInitial
   onSubmit: (values: BudgetFormValues) => void
@@ -53,7 +56,7 @@ const SPENDING_TYPE_OPTIONS = [
   { value: 'crecimiento', label: 'Crecimiento — opcional' },
 ]
 
-export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
+export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
   const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? (envelopes[0]?.id ?? ''))
   const [currencyId, setCurrencyId] = useState(initialValues?.currencyId ?? (currencies[0]?.id ?? ''))
@@ -62,6 +65,7 @@ export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues
   const [referenceRate, setReferenceRate] = useState(initialValues?.referenceRate != null ? String(initialValues.referenceRate) : '')
   const [frequency, setFrequency] = useState<BudgetItem['frequency']>(initialValues?.frequency ?? 'monthly')
   const [spendingType, setSpendingType] = useState<BudgetItem['spendingType']>(initialValues?.spendingType ?? 'supervivencia')
+  const [walletId, setWalletId] = useState<string>(initialValues?.walletId ?? '')
   const [paymentDay, setPaymentDay] = useState(initialValues?.paymentDay != null ? String(initialValues.paymentDay) : '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [nameError, setNameError] = useState('')
@@ -74,6 +78,10 @@ export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues
   const paymentCurrencyOptions = [
     { value: '', label: 'Misma que presupuesto' },
     ...currencies.filter((c) => c.type === 'fiat').map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` })),
+  ]
+  const walletOptions = [
+    { value: '', label: 'Sin billetera predeterminada' },
+    ...wallets.map((w) => ({ value: w.id, label: w.name })),
   ]
 
   const showReferenceRate = multiCurrency && paymentCurrencyId !== '' && paymentCurrencyId !== currencyId
@@ -94,6 +102,7 @@ export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues
       referenceRate: showReferenceRate && referenceRate !== '' ? Number(referenceRate) : null,
       frequency,
       spendingType,
+      walletId: walletId !== '' ? walletId : null,
       paymentDay: paymentDay !== '' ? Number(paymentDay) : null,
       notes: notes.trim() || null,
     })
@@ -114,6 +123,13 @@ export function BudgetForm({ envelopes, currencies, multiCurrency, initialValues
         options={envelopeOptions}
         value={envelopeId}
         onChange={(e) => setEnvelopeId(e.target.value)}
+      />
+
+      <Select
+        label="Billetera"
+        options={walletOptions}
+        value={walletId}
+        onChange={(e) => setWalletId(e.target.value)}
       />
 
       <div className="flex gap-3">
