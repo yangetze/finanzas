@@ -14,7 +14,9 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import type { BudgetItem } from '@/types'
 import type { BudgetItemStampInput } from '@/lib/stampMonth'
-import { sumByCurrency } from '@/lib/budgetTotals'
+import { sumByCurrency, isMissingRateForSingleCurrencySum } from '@/lib/budgetTotals'
+import { useExchangeRates } from '@/hooks/useExchangeRates'
+import { TriangleAlert } from 'lucide-react'
 
 function currentMonth() {
   const d = new Date()
@@ -34,6 +36,7 @@ export function BudgetPage() {
   const { data: envelopes, isLoading: envsLoading } = useEnvelopes(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
   const { data: wallets } = useWallets(user?.id)
+  const { data: rates } = useExchangeRates()
   const { data: spending } = useEnvelopeSpending(user?.id, month)
   const { data: pendingData } = useEnvelopePending(user?.id, month)
   const createItem = useCreateBudgetItem()
@@ -129,6 +132,8 @@ export function BudgetPage() {
     return sumByCurrency((items ?? []).filter((i) => i.spendingType === type))
   }
 
+  const missingRate = isMissingRateForSingleCurrencySum(items ?? [], currencies ?? [], rates ?? [])
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -152,6 +157,16 @@ export function BudgetPage() {
           </Button>
         </div>
       </div>
+
+      {missingRate && (
+        <div className="flex items-start gap-2.5 bg-amber-fin/10 border border-amber-fin/40 rounded-xl px-4 py-3">
+          <TriangleAlert size={16} className="text-amber-fin mt-0.5 shrink-0" />
+          <p className="text-sm font-ui text-amber-fin">
+            No hay tasa de cambio registrada para sumar los totales en una sola moneda. Los totales
+            se muestran por separado en cada moneda.
+          </p>
+        </div>
+      )}
 
       {!envelopes?.length && !showForm && (
         <p className="text-sm font-ui text-ink-muted">
