@@ -57,6 +57,10 @@ export function BudgetPage() {
     return currencies?.find((c) => c.id === currencyId)
   }
 
+  function getEnvelope(envelopeId: string) {
+    return envelopes?.find((e) => e.id === envelopeId)
+  }
+
   function handleEdit(item: BudgetItem) {
     setEditing(item)
     setShowForm(true)
@@ -217,22 +221,39 @@ export function BudgetPage() {
                 </span>
               </div>
               <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
-                {typeItems.map((item, idx) => {
-                  const currency = getCurrency(item.currencyId)
-                  if (!currency) return null
-                  return (
-                    <div key={item.id} className={idx > 0 ? 'border-t border-border' : ''}>
-                      <BudgetItemRow
-                        item={item}
-                        currency={currency}
-                        spent={getSpent(item.envelopeId)}
-                        pending={getPending(item.envelopeId)}
-                        onEdit={handleEdit}
-                        onDeactivate={(id) => deactivateItem.mutate(id)}
-                      />
-                    </div>
-                  )
-                })}
+                {(() => {
+                  const envelopeIds = [...new Set(typeItems.map((i) => i.envelopeId))]
+                  return envelopeIds.map((envId, envIdx) => {
+                    const envelope = getEnvelope(envId)
+                    const envItems = typeItems.filter((i) => i.envelopeId === envId)
+                    return (
+                      <div key={envId} className={envIdx > 0 ? 'border-t border-border' : ''}>
+                        <div className="px-3 py-1.5 flex items-center gap-1.5 bg-canvas-muted/50">
+                          {envelope?.emoji && <span className="text-sm">{envelope.emoji}</span>}
+                          <span className="text-xs font-ui font-semibold text-ink-muted uppercase tracking-wide">
+                            {envelope?.name ?? '—'}
+                          </span>
+                        </div>
+                        {envItems.map((item, idx) => {
+                          const currency = getCurrency(item.currencyId)
+                          if (!currency) return null
+                          return (
+                            <div key={item.id} className={`border-t border-border/60 pl-3`}>
+                              <BudgetItemRow
+                                item={item}
+                                currency={currency}
+                                spent={getSpent(item.envelopeId)}
+                                pending={getPending(item.envelopeId)}
+                                onEdit={handleEdit}
+                                onDeactivate={(id) => deactivateItem.mutate(id)}
+                              />
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             </section>
           )
