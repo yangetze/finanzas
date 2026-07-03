@@ -234,7 +234,7 @@ export function BudgetPage() {
                             {envelope?.name ?? '—'}
                           </span>
                         </div>
-                        {envItems.map((item, idx) => {
+                        {envItems.map((item) => {
                           const currency = getCurrency(item.currencyId)
                           if (!currency) return null
                           return (
