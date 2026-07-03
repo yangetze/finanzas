@@ -24,7 +24,6 @@ interface BudgetFormInitial {
   currencyId: string
   baseAmount: number
   paymentCurrencyId: string | null
-  referenceRate: number | null
   frequency: BudgetItem['frequency']
   spendingType: BudgetItem['spendingType']
   walletId: string | null
@@ -62,7 +61,6 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
   const [currencyId, setCurrencyId] = useState(initialValues?.currencyId ?? (currencies[0]?.id ?? ''))
   const [baseAmount, setBaseAmount] = useState(initialValues?.baseAmount != null ? String(initialValues.baseAmount) : '')
   const [paymentCurrencyId, setPaymentCurrencyId] = useState<string>(initialValues?.paymentCurrencyId ?? '')
-  const [referenceRate, setReferenceRate] = useState(initialValues?.referenceRate != null ? String(initialValues.referenceRate) : '')
   const [frequency, setFrequency] = useState<BudgetItem['frequency']>(initialValues?.frequency ?? 'monthly')
   const [spendingType, setSpendingType] = useState<BudgetItem['spendingType']>(initialValues?.spendingType ?? 'supervivencia')
   const [walletId, setWalletId] = useState<string>(initialValues?.walletId ?? '')
@@ -108,8 +106,6 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
     ...wallets.map((w) => ({ value: w.id, label: w.name })),
   ]
 
-  const showReferenceRate = multiCurrency && paymentCurrencyId !== '' && paymentCurrencyId !== currencyId
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     let valid = true
@@ -122,7 +118,7 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
       currencyId,
       baseAmount: baseAmount !== '' ? Number(baseAmount) : 0,
       paymentCurrencyId: paymentCurrencyId !== '' ? paymentCurrencyId : null,
-      referenceRate: showReferenceRate && referenceRate !== '' ? Number(referenceRate) : null,
+      referenceRate: null,
       frequency,
       spendingType,
       walletId: walletId !== '' ? walletId : null,
@@ -204,18 +200,6 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
           options={paymentCurrencyOptions}
           value={paymentCurrencyId}
           onChange={(e) => setPaymentCurrencyId(e.target.value)}
-        />
-      )}
-
-      {showReferenceRate && (
-        <Input
-          label="Tasa de referencia"
-          type="number"
-          step="0.01"
-          min={0}
-          value={referenceRate}
-          onChange={(e) => setReferenceRate(e.target.value)}
-          placeholder="Ej. 36.5"
         />
       )}
 

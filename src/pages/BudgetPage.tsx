@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import type { BudgetItem } from '@/types'
 import type { BudgetItemStampInput } from '@/lib/stampMonth'
+import { sumByCurrency } from '@/lib/budgetTotals'
 
 function currentMonth() {
   const d = new Date()
@@ -124,10 +125,8 @@ export function BudgetPage() {
 
   const spendingTypes: BudgetItem['spendingType'][] = ['supervivencia', 'flexible', 'crecimiento']
 
-  function groupTotal(type: BudgetItem['spendingType']) {
-    return (items ?? [])
-      .filter((i) => i.spendingType === type)
-      .reduce((sum, i) => sum + i.baseAmount, 0)
+  function groupTotals(type: BudgetItem['spendingType']) {
+    return sumByCurrency((items ?? []).filter((i) => i.spendingType === type))
   }
 
   return (
@@ -178,7 +177,6 @@ export function BudgetPage() {
                     currencyId: editing.currencyId,
                     baseAmount: editing.baseAmount,
                     paymentCurrencyId: editing.paymentCurrencyId,
-                    referenceRate: editing.referenceRate,
                     frequency: editing.frequency,
                     spendingType: editing.spendingType,
                     walletId: editing.walletId,
@@ -208,17 +206,25 @@ export function BudgetPage() {
         {spendingTypes.map((type) => {
           const typeItems = (items ?? []).filter((i) => i.spendingType === type)
           if (typeItems.length === 0) return null
-          const total = groupTotal(type)
+          const totals = groupTotals(type)
 
           return (
             <section key={type} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-ui font-semibold text-ink-muted uppercase tracking-wide">
                   {SPENDING_TYPE_LABELS[type]}
                 </h2>
-                <span className="text-sm font-mono text-ink-muted">
-                  {total.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </span>
+                <div className="flex flex-wrap justify-end gap-x-3">
+                  {totals.map(({ currencyId, total }) => {
+                    const currency = getCurrency(currencyId)
+                    return (
+                      <span key={currencyId} className="text-sm font-mono text-ink-muted">
+                        {currency?.symbol ?? ''}{' '}
+                        {total.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    )
+                  })}
+                </div>
               </div>
               <div className="bg-canvas-soft border border-border rounded-xl overflow-hidden">
                 {(() => {
