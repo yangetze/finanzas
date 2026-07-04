@@ -573,6 +573,112 @@ export async function createIncome(
   }
 }
 
+export async function getTransfers(userId: string, month?: string) {
+  let query = supabase
+    .from('transfers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (month) {
+    const [y, m] = month.split('-')
+    const lastDay = new Date(Number(y), Number(m), 0).getDate()
+    query = query.gte('date', `${month}-01`).lte('date', `${month}-${lastDay}`)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+export async function createTransfer(data: {
+  userId: string
+  date: string
+  fromWalletId: string
+  toWalletId: string
+  fromCurrencyId: string
+  toCurrencyId: string
+  amountSent: number
+  commission: number
+  amountReceived: number
+  fromWalletName: string
+  toWalletName: string
+  notes?: string | null
+}) {
+  // The commission expense is a stats-only record: the commission already
+  // left the origin wallet as part of amount_sent, so the expense must not
+  // debit the balance again.
+  let commissionTransactionId: string | null = null
+  if (data.commission > 0) {
+    const { data: tx, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: data.userId,
+        date: data.date,
+        description: `Comisión transferencia ${data.fromWalletName} → ${data.toWalletName}`,
+        type: 'expense',
+        status: 'pagado',
+        envelope_id: null,
+        wallet_id: data.fromWalletId,
+        budget_item_id: null,
+        origin_currency_id: data.fromCurrencyId,
+        origin_amount: data.commission,
+        payment_currency_id: data.fromCurrencyId,
+        payment_amount: data.commission,
+        conversion_rate: null,
+        base_currency_id: data.fromCurrencyId,
+        base_amount: data.commission,
+        base_rate: null,
+        notes: null,
+        installment_number: null,
+        installment_total: null,
+        group_id: null,
+      })
+      .select('id')
+      .single()
+    if (txError) throw txError
+    commissionTransactionId = tx.id
+  }
+
+  const { error } = await supabase.from('transfers').insert({
+    user_id: data.userId,
+    date: data.date,
+    from_wallet_id: data.fromWalletId,
+    to_wallet_id: data.toWalletId,
+    from_currency_id: data.fromCurrencyId,
+    to_currency_id: data.toCurrencyId,
+    amount_sent: data.amountSent,
+    commission: data.commission,
+    amount_received: data.amountReceived,
+    commission_transaction_id: commissionTransactionId,
+    notes: data.notes ?? null,
+  })
+  if (error) throw error
+
+  await adjustWalletBalance(data.fromWalletId, -data.amountSent)
+  await adjustWalletBalance(data.toWalletId, data.amountReceived)
+}
+
+export async function deleteTransfer(transfer: {
+  id: string
+  fromWalletId: string
+  toWalletId: string
+  amountSent: number
+  amountReceived: number
+  commissionTransactionId: string | null
+}) {
+  const { error } = await supabase.from('transfers').delete().eq('id', transfer.id)
+  if (error) throw error
+
+  if (transfer.commissionTransactionId) {
+    await deleteTransaction(transfer.commissionTransactionId)
+  }
+
+  await adjustWalletBalance(transfer.fromWalletId, transfer.amountSent)
+  await adjustWalletBalance(transfer.toWalletId, -transfer.amountReceived)
+}
+
 export async function getLatestExchangeRate(
   fromCurrencyId: string,
   toCurrencyId: string,
