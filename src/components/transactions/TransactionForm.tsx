@@ -3,14 +3,13 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { getLatestExchangeRate } from '@/lib/supabase'
-import type { Envelope, Wallet, Currency, Transaction } from '@/types'
+import type { Envelope, Wallet, Currency } from '@/types'
 
 const today = () => new Date().toISOString().split('T')[0]
 
 interface TransactionFormValues {
   date: string
   description: string
-  type: Transaction['type']
   status: 'apartado' | 'pagado'
   envelopeId: string | null
   walletId: string | null
@@ -26,7 +25,6 @@ interface TransactionFormValues {
 interface TransactionFormInitial {
   date: string
   description: string
-  type: Transaction['type']
   status: 'apartado' | 'pagado'
   envelopeId: string | null
   walletId: string | null
@@ -46,11 +44,6 @@ interface TransactionFormProps {
   onCancel: () => void
   loading?: boolean
 }
-
-const TYPE_OPTIONS = [
-  { value: 'expense', label: 'Gasto' },
-  { value: 'income', label: 'Ingreso' },
-]
 
 const STATUS_OPTIONS = [
   { value: 'pagado', label: 'Pagado' },
@@ -72,7 +65,6 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [date, setDate] = useState(initialValues?.date ?? today())
   const [description, setDescription] = useState(initialValues?.description ?? '')
-  const [type, setType] = useState<Transaction['type']>(initialValues?.type ?? 'expense')
   const [status, setStatus] = useState<'apartado' | 'pagado'>(initialValues?.status ?? 'pagado')
   const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? NONE)
   const [walletId, setWalletId] = useState(initialValues?.walletId ?? NONE)
@@ -118,7 +110,6 @@ export function TransactionForm({
     onSubmit({
       date,
       description: description.trim(),
-      type,
       status,
       envelopeId: envelopeId === NONE ? null : envelopeId,
       walletId: walletId === NONE ? null : walletId,
@@ -149,24 +140,12 @@ export function TransactionForm({
         placeholder="Ej. Netflix, Mercado, Condominio"
       />
 
-      <div className="flex gap-3">
-        <div className="flex-1">
-          <Select
-            label="Tipo"
-            options={TYPE_OPTIONS}
-            value={type}
-            onChange={(e) => setType(e.target.value as Transaction['type'])}
-          />
-        </div>
-        <div className="flex-1">
-          <Select
-            label="Estado"
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(e) => setStatus(e.target.value as 'apartado' | 'pagado')}
-          />
-        </div>
-      </div>
+      <Select
+        label="Estado"
+        options={STATUS_OPTIONS}
+        value={status}
+        onChange={(e) => setStatus(e.target.value as 'apartado' | 'pagado')}
+      />
 
       <Select
         label="Sobre"

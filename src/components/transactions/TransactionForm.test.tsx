@@ -155,7 +155,6 @@ describe('TransactionForm', () => {
         initialValues={{
           date: '2026-06-15',
           description: 'Netflix',
-          type: 'expense',
           status: 'apartado',
           envelopeId: 'e1',
           walletId: 'w1',

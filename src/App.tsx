@@ -10,6 +10,7 @@ import { OnboardingPage } from '@/pages/OnboardingPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { EnvelopesPage } from '@/pages/EnvelopesPage'
 import { TransactionsPage } from '@/pages/TransactionsPage'
+import { IncomePage } from '@/pages/IncomePage'
 import { BudgetPage } from '@/pages/BudgetPage'
 import { DebtsPage } from '@/pages/DebtsPage'
 import { BabyStepsPage } from '@/pages/BabyStepsPage'
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/billeteras" element={<WalletsPage />} />
               <Route path="/sobres" element={<EnvelopesPage />} />
               <Route path="/gastos" element={<TransactionsPage />} />
+              <Route path="/ingresos" element={<IncomePage />} />
               <Route path="/presupuesto" element={<BudgetPage />} />
               <Route path="/deudas" element={<DebtsPage />} />
               <Route path="/metas" element={<BabyStepsPage />} />

@@ -4,9 +4,11 @@ import {
   getUpcomingTransactions,
   createTransaction,
   createTransactionsBatch,
+  createIncome,
   updateTransaction,
   deleteTransaction,
   markTransactionPaid,
+  markIncomeReceived,
 } from '@/lib/supabase'
 import type { Transaction } from '@/types'
 
@@ -98,6 +100,29 @@ export function useMarkTransactionPaid() {
   return useMutation({
     mutationFn: ({ id, walletId, paymentAmount }: { id: string; walletId: string | null; paymentAmount: number }) =>
       markTransactionPaid(id, walletId, paymentAmount),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['wallets'] })
+    },
+  })
+}
+
+export function useCreateIncome() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createIncome,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['wallets'] })
+    },
+  })
+}
+
+export function useMarkIncomeReceived() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, walletId, paymentAmount }: { id: string; walletId: string | null; paymentAmount: number }) =>
+      markIncomeReceived(id, walletId, paymentAmount),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
       qc.invalidateQueries({ queryKey: ['wallets'] })
