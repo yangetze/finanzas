@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import type { UserProfile } from '@/types'
 import type { StampedTransaction } from '@/lib/stampMonth'
+import { incomeEditBalanceDeltas } from '@/lib/balanceDeltas'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -570,6 +571,26 @@ export async function createIncome(
   await createTransaction({ ...data, type: 'income' })
   if (data.status === 'pagado' && data.walletId) {
     await adjustWalletBalance(data.walletId, data.paymentAmount)
+  }
+}
+
+export async function updateIncome(
+  id: string,
+  oldState: { status: string; walletId: string | null; amount: number },
+  data: Parameters<typeof updateTransaction>[1] & {
+    status: string
+    walletId: string | null
+    paymentAmount: number
+  },
+) {
+  await updateTransaction(id, data)
+  const deltas = incomeEditBalanceDeltas(oldState, {
+    status: data.status,
+    walletId: data.walletId,
+    amount: data.paymentAmount,
+  })
+  for (const { walletId, delta } of deltas) {
+    await adjustWalletBalance(walletId, delta)
   }
 }
 
