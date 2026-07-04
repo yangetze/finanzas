@@ -531,6 +531,17 @@ export async function stampMonth(params: {
   if (error) throw error
 }
 
+async function adjustWalletBalance(walletId: string, delta: number) {
+  const { data } = await supabase
+    .from('wallets')
+    .select('balance')
+    .eq('id', walletId)
+    .single()
+  if (data) {
+    await updateWallet(walletId, { balance: data.balance + delta })
+  }
+}
+
 export async function markTransactionPaid(
   id: string,
   walletId: string | null,
@@ -538,14 +549,27 @@ export async function markTransactionPaid(
 ) {
   await updateTransaction(id, { status: 'pagado' })
   if (walletId) {
-    const { data } = await supabase
-      .from('wallets')
-      .select('balance')
-      .eq('id', walletId)
-      .single()
-    if (data) {
-      await updateWallet(walletId, { balance: data.balance - paymentAmount })
-    }
+    await adjustWalletBalance(walletId, -paymentAmount)
+  }
+}
+
+export async function markIncomeReceived(
+  id: string,
+  walletId: string | null,
+  paymentAmount: number,
+) {
+  await updateTransaction(id, { status: 'pagado' })
+  if (walletId) {
+    await adjustWalletBalance(walletId, paymentAmount)
+  }
+}
+
+export async function createIncome(
+  data: Omit<Parameters<typeof createTransaction>[0], 'type'>,
+) {
+  await createTransaction({ ...data, type: 'income' })
+  if (data.status === 'pagado' && data.walletId) {
+    await adjustWalletBalance(data.walletId, data.paymentAmount)
   }
 }
 
