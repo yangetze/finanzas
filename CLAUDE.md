@@ -29,6 +29,30 @@ See `docs/business-context.md` for full product context.
 - Never assume base currency is USDC — use `user.base_currency_id`
 - Stablecoins (USDC, USDt, DOC) are 1:1 with USD — no conversion between them
 - Multi-currency UI only appears when `user.multi_currency = true`
+- Never sum amounts across currencies into one number — group per currency (`sumByCurrency` in `lib/budgetTotals.ts`) or show an alert when no exchange rate exists
+
+## Domain Concepts (implemented)
+- **Gastos** (`/gastos`): expense transactions only (`type = 'expense'`)
+- **Ingresos** (`/ingresos`): income transactions (`type = 'income'`). Two states:
+  `pendiente` (expected) and Recibido (stored as `pagado` — same status enum, no
+  separate value). Receiving income credits the wallet balance; paying an expense
+  debits it (`markIncomeReceived` / `markTransactionPaid` in `lib/supabase.ts`)
+- **Transferencias** (Billeteras page): wallet-to-wallet moves stored in the
+  `transfers` table. Debit origin by `amount_sent`, credit destination by
+  `amount_received` (currency may differ; rate is implicit). Commission > 0 creates
+  a linked expense in Gastos (`commission_transaction_id`) — that expense must NOT
+  touch wallet balances (the commission already left as part of `amount_sent`).
+  Zero commission → transfer record only, no transaction. Create + delete only
+  (delete fully reverses balances and voids the linked expense); no editing
+- **Timbrar mes** (Presupuesto): stamps budget items into `pendiente` transactions
+  for the month (`lib/stampMonth.ts`); reference rates are NOT stored on budget
+  items — the exchange rate belongs to the moment of the spend
+- **Sobres**: two-level hierarchy (parent groups → child envelopes). Budget form
+  groups children under parents with `<optgroup>`; budget list nests items under
+  parent and child headers
+- **Auth**: never `await` a Supabase call inside `onAuthStateChange` — supabase-js
+  holds its auth lock during dispatch and the app deadlocks (frozen spinner on tab
+  refocus). Defer to a macrotask; skip profile refetch when the same user is loaded
 
 ## Testing (TDD)
 Write the test FIRST. Watch it fail. Then implement.
@@ -74,14 +98,17 @@ src/
     ui/            ← Button, Input, Modal, Badge, Card, ProgressBar
     layout/        ← AppShell, Sidebar, MobileNav, Header
     envelopes/     ← EnvelopeCard, EnvelopeGroup, SubEnvelope
-    transactions/  ← TransactionList, TransactionForm, CasheaModal
-    budget/        ← BudgetList, BudgetForm, MonthOpener
+    transactions/  ← TransactionRow/Form, IncomeRow/Form, CasheaForm
+    budget/        ← BudgetItemRow, BudgetForm, MonthOpener
+    wallets/       ← WalletCard, WalletForm, TransferForm, TransferRow
     debts/         ← DebtDashboard, TDCCard, CasheaGroup
     babysteps/     ← StepCard, GoalProgress
     exchange-rates/← RateCard, RateForm
-  hooks/
+  hooks/           ← useTransactions, useTransfers, useWallets, useBudgetItems…
   lib/
-    supabase.ts    ← client, auth helpers, DB helpers
+    supabase.ts    ← client, auth helpers, DB helpers (incl. transfers, income)
+    budgetTotals.ts← sumByCurrency, isMissingRateForSingleCurrencySum
+    stampMonth.ts  ← buildStampedTransactions (Timbrar mes)
     utils.ts       ← formatCurrency, formatDate, calcBaseAmount
   pages/
   types/

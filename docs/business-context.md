@@ -220,6 +220,58 @@ TDC payments are regular expense transactions that reduce the used balance.
 
 ---
 
+## Income (Ingresos)
+
+Income is recorded on its own page (`/ingresos`), separate from expenses.
+Income transactions reuse the `transactions` table with `type = 'income'`.
+
+Two states:
+- **Pendiente** — expected income (e.g. the salary that arrives on the 30th),
+  useful for planning the month before the money lands
+- **Recibido** — money in hand (stored as status `pagado`; same enum as expenses)
+
+Wallet symmetry: receiving income **credits** the wallet balance, the mirror
+of how paying an expense **debits** it. A pending income has a "Recibir"
+action, just like a pending expense has a pay action.
+
+Income has no envelope — envelopes track spending. In Budget Zero terms,
+income is the pool that gets *assigned* to envelopes; recording it enables
+the dashboard metric "income vs assigned vs free (unassigned)".
+
+---
+
+## Transfers Between Wallets
+
+Money often moves between wallets (e.g. Binance USDC → Zinli USD, or selling
+USDC to load a VES bank account). A transfer is **not income and not an
+expense** — it's the user's own money changing pockets. Recording it as
+income+expense would inflate monthly stats.
+
+Each transfer records: date, origin wallet, destination wallet,
+**amount sent**, **commission**, **amount received**. The destination amount
+may be in another currency — the exchange rate is implicit between sent and
+received (no rate input needed; between USD/stablecoins the received amount
+auto-derives as sent − commission thanks to the 1:1 parity rule).
+
+Balance mechanics:
+- Origin wallet is debited by amount sent
+- Destination wallet is credited by amount received
+
+Commission handling (the only real money lost in a transfer):
+- **Commission > 0** → one linked expense is created in Gastos
+  ("Comisión transferencia A → B", status pagado, origin wallet). The link is
+  stored in `transfers.commission_transaction_id`. This expense must NOT touch
+  wallet balances — the commission already left as part of amount sent
+  (avoiding a double-debit). Commission reports (how much do I spend on
+  commissions?) are computed from the transfers table, per currency.
+- **Commission = 0** → transfer record only, no transaction is created.
+
+Corrections: transfers support **create and delete only** — deleting reverses
+both wallet balances and voids the linked commission expense. To fix a
+mistake, delete and re-create. No editing by design (simpler, less error-prone).
+
+---
+
 ## Cashea (Venezuela's BNPL)
 
 Cashea is a buy-now-pay-later service. When a purchase is made:

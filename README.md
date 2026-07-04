@@ -33,8 +33,9 @@ finanzas/
 │   │   ├── ui/                ← Componentes base
 │   │   ├── layout/            ← AppShell, Sidebar, MobileNav
 │   │   ├── envelopes/         ← Sobres y grupos
-│   │   ├── transactions/      ← Registro de gastos
+│   │   ├── transactions/      ← Registro de gastos e ingresos
 │   │   ├── budget/            ← Plantilla mensual
+│   │   ├── wallets/           ← Billeteras y transferencias
 │   │   ├── debts/             ← TDC y Cashea
 │   │   └── babysteps/         ← Metas financieras
 │   ├── hooks/                 ← Custom hooks
@@ -72,20 +73,31 @@ cp .env.example .env
 pnpm dev
 ```
 
-## Sprints
+## Funcionalidades
 
-| Sprint | Contenido | Estado |
-|--------|-----------|--------|
-| 01 | Auth (magic link), shell, onboarding, configuración de usuario | ✅ Completado |
-| 02 | Wallets y tasas de cambio | ⬜ Pendiente |
-| 03 | Sobres — grupos, sub-sobres, prioridades | ⬜ Pendiente |
-| 04 | Presupuesto — plantilla mensual | ⬜ Pendiente |
-| 05 | Gastos — registro multi-moneda | ⬜ Pendiente |
-| 06 | Cashea — cuotas automáticas | ⬜ Pendiente |
-| 07 | Dashboard principal | ⬜ Pendiente |
-| 08 | Deudas — TDC dashboard | ⬜ Pendiente |
-| 09 | Metas — BabySteps | ⬜ Pendiente |
-| 10 | Apertura de mes | ⬜ Pendiente |
+| Sección | Qué hace |
+|---------|----------|
+| Dashboard | Resumen del mes |
+| Billeteras | Cuentas (asset) y tarjetas (credit), transferencias entre billeteras con comisión e historial |
+| Sobres | Sobres con jerarquía grupo → sub-sobre, colapsables |
+| Gastos | Registro de gastos multi-moneda, estados apartado/pendiente/pagado, compras Cashea en cuotas |
+| Ingresos | Registro de ingresos con estados Pendiente (esperado) y Recibido; al recibir acredita la billetera |
+| Presupuesto | Plantilla mensual de partidas agrupadas por sobre, totales por moneda, "Timbrar mes" genera los gastos pendientes del mes |
+| Deudas | Dashboard de TDC (límite, usado, disponible) y grupos Cashea |
+| Metas | BabySteps con progreso |
+| Tasas | Tasas de cambio (solo admin) |
+
+### Transferencias entre billeteras
+
+Mover dinero de una billetera a otra (ej. Binance → Zinli), con soporte para:
+- **Comisión opcional**: si es mayor a cero se registra automáticamente como
+  gasto en Gastos ("Comisión transferencia A → B") — así sabes cuánto gastas
+  en comisiones (total por moneda visible en Billeteras)
+- **Cambio de moneda**: el monto recibido puede estar en otra moneda; la tasa
+  queda implícita entre enviado y recibido (entre stablecoins/USD se autocalcula 1:1)
+- **Historial completo**: toda transferencia queda registrada, con o sin comisión
+- **Eliminar revierte todo**: balances restaurados y gasto de comisión anulado
+  (no hay edición: eliminar y crear de nuevo es el camino de corrección)
 
 ## Monedas soportadas
 
@@ -107,8 +119,10 @@ exchange_rates   → Tasas de cambio por fecha (global)
 users            → Perfil + configuración del usuario
 wallets          → Cuentas (asset) y tarjetas (credit)
 envelopes        → Sobres con jerarquía padre/hijo
-budget           → Plantilla mensual de gastos
-transactions     → Todos los movimientos de dinero
+budget_items     → Plantilla mensual de gastos (partidas)
+transactions     → Gastos e ingresos (type: expense | income)
+transfers        → Movimientos entre billeteras (con comisión enlazada
+                   a un gasto vía commission_transaction_id)
 ```
 
 ## Convenciones
