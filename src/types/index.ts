@@ -91,6 +91,22 @@ export interface BudgetItem {
 export type TransactionStatus = 'apartado' | 'pendiente' | 'pagado' | 'anulado'
 export type TransactionType = 'expense' | 'income'
 
+export interface Transfer {
+  id: string
+  userId: string
+  date: string
+  fromWalletId: string
+  toWalletId: string
+  fromCurrencyId: string
+  toCurrencyId: string
+  amountSent: number
+  commission: number
+  amountReceived: number
+  commissionTransactionId: string | null
+  notes: string | null
+  createdAt: string
+}
+
 export interface Transaction {
   id: string
   userId: string
