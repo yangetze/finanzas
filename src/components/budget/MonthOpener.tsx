@@ -1,6 +1,6 @@
 import { CalendarPlus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { getApplicableItems, buildTransactionFromItem } from '@/lib/monthOpener'
+import { getApplicableItems, buildTransactionsFromItem } from '@/lib/monthOpener'
 import type { BudgetItem } from '@/types'
 
 interface MonthOpenerProps {
@@ -9,7 +9,7 @@ interface MonthOpenerProps {
   year: number
   month: number
   baseCurrencyId: string
-  onOpen: (transactions: ReturnType<typeof buildTransactionFromItem>[]) => void
+  onOpen: (transactions: ReturnType<typeof buildTransactionsFromItem>) => void
   loading: boolean
 }
 
@@ -17,8 +17,8 @@ export function MonthOpener({ items, userId, year, month, baseCurrencyId, onOpen
   const applicable = getApplicableItems(items, month)
 
   function handleOpen() {
-    const transactions = applicable.map((item) =>
-      buildTransactionFromItem(item, userId, year, month, baseCurrencyId),
+    const transactions = applicable.flatMap((item) =>
+      buildTransactionsFromItem(item, userId, year, month, baseCurrencyId),
     )
     onOpen(transactions)
   }

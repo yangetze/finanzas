@@ -43,6 +43,8 @@ interface BudgetFormProps {
 }
 
 const FREQUENCY_OPTIONS = [
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'biweekly', label: 'Quincenal' },
   { value: 'monthly', label: 'Mensual' },
   { value: 'quarterly', label: 'Trimestral' },
   { value: 'semiannual', label: 'Semestral' },

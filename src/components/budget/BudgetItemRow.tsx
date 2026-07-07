@@ -4,6 +4,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar'
 import type { BudgetItem, Currency } from '@/types'
 
 const FREQUENCY_LABELS: Record<BudgetItem['frequency'], string> = {
+  weekly: 'Semanal',
+  biweekly: 'Quincenal',
   monthly: 'Mensual',
   quarterly: 'Trimestral',
   semiannual: 'Semestral',

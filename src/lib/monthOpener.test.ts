@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getApplicableItems, buildTransactionFromItem } from './monthOpener'
+import { getApplicableItems, buildTransactionFromItem, buildTransactionsFromItem } from './monthOpener'
 import type { BudgetItem } from '@/types'
 
 const BASE_ITEM: BudgetItem = {
@@ -73,6 +73,32 @@ describe('getApplicableItems', () => {
   it('excludes inactive items', () => {
     const item = { ...BASE_ITEM, isActive: false }
     expect(getApplicableItems([item], 1)).toHaveLength(0)
+  })
+
+  it('includes weekly and biweekly items every month', () => {
+    const weekly = { ...BASE_ITEM, frequency: 'weekly' as const }
+    const biweekly = { ...BASE_ITEM, id: 'b2', frequency: 'biweekly' as const }
+    expect(getApplicableItems([weekly, biweekly], 1)).toHaveLength(2)
+    expect(getApplicableItems([weekly, biweekly], 8)).toHaveLength(2)
+  })
+})
+
+describe('buildTransactionsFromItem', () => {
+  it('returns a single transaction for monthly items', () => {
+    const txs = buildTransactionsFromItem(BASE_ITEM, 'u1', 2026, 6, 'c-usd')
+    expect(txs.map((t) => t.date)).toEqual(['2026-06-10'])
+  })
+
+  it('returns one transaction per week for weekly items', () => {
+    const item = { ...BASE_ITEM, frequency: 'weekly' as const, paymentDay: 3 }
+    const txs = buildTransactionsFromItem(item, 'u1', 2026, 7, 'c-usd')
+    expect(txs.map((t) => t.date)).toEqual(['2026-07-03', '2026-07-10', '2026-07-17', '2026-07-24', '2026-07-31'])
+  })
+
+  it('returns two transactions for biweekly items when both fit', () => {
+    const item = { ...BASE_ITEM, frequency: 'biweekly' as const, paymentDay: 10 }
+    const txs = buildTransactionsFromItem(item, 'u1', 2026, 7, 'c-usd')
+    expect(txs.map((t) => t.date)).toEqual(['2026-07-10', '2026-07-25'])
   })
 })
 
