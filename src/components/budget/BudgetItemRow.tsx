@@ -12,6 +12,14 @@ const FREQUENCY_LABELS: Record<BudgetItem['frequency'], string> = {
   annual: 'Anual',
 }
 
+const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+function frequencyDetail(item: BudgetItem) {
+  const anchored = item.frequency === 'quarterly' || item.frequency === 'semiannual' || item.frequency === 'annual'
+  const month = anchored && item.startMonth != null ? ` · ${MONTH_NAMES[item.startMonth - 1]}` : ''
+  return `${FREQUENCY_LABELS[item.frequency]}${month}`
+}
+
 interface BudgetItemRowProps {
   item: BudgetItem
   currency: Currency
@@ -34,7 +42,7 @@ export function BudgetItemRow({ item, currency, spent, pending, onEdit, onDeacti
         <div className="flex flex-col gap-0.5 flex-1 min-w-0">
           <span className="text-sm font-ui font-medium text-ink truncate">{item.name}</span>
           <span className="text-xs font-ui text-ink-faint">
-            {FREQUENCY_LABELS[item.frequency]}
+            {frequencyDetail(item)}
             {item.paymentDay ? ` · día ${item.paymentDay}` : ''}
           </span>
         </div>

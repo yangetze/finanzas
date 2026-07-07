@@ -7,8 +7,9 @@ export function getApplicableItems(items: BudgetItem[], month: number): BudgetIt
 
 function isApplicable(item: BudgetItem, month: number): boolean {
   if (item.frequency === 'weekly' || item.frequency === 'biweekly' || item.frequency === 'monthly') return true
-  if (item.startMonth === null) return true
-  const offset = ((month - item.startMonth + 12) % 12)
+  // Null anchor defaults to January, same as shouldStampThisMonth (Timbrar mes).
+  const anchor = item.startMonth ?? 1
+  const offset = ((month - anchor + 12) % 12)
   const period = item.frequency === 'quarterly' ? 3 : item.frequency === 'semiannual' ? 6 : 12
   return offset % period === 0
 }

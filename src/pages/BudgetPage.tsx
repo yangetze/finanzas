@@ -86,6 +86,7 @@ export function BudgetPage() {
     spendingType: BudgetItem['spendingType']
     walletId: string | null
     paymentDay: number | null
+    startMonth: number | null
     notes: string | null
   }) {
     if (editing) {
@@ -196,6 +197,7 @@ export function BudgetPage() {
                     spendingType: editing.spendingType,
                     walletId: editing.walletId,
                     paymentDay: editing.paymentDay,
+                    startMonth: editing.startMonth,
                     notes: editing.notes,
                   }
                 : undefined
