@@ -100,6 +100,60 @@ describe('useAuth', () => {
     expect(result.current.loading).toBe(false)
   })
 
+  it('does not call getUserProfile synchronously inside the auth callback (supabase lock deadlock guard)', async () => {
+    const mockSession = { user: { id: 'user-123' } }
+    let capturedCallback: ((event: string, session: unknown) => void) | null = null
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      capturedCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+    mockGetSession.mockResolvedValue({ data: { session: null } })
+    mockGetUserProfile.mockResolvedValue({ id: 'user-123' })
+
+    renderHook(() => useAuth(), { wrapper })
+
+    act(() => {
+      capturedCallback!('TOKEN_REFRESHED', mockSession)
+    })
+    expect(mockGetUserProfile).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    expect(mockGetUserProfile).toHaveBeenCalledWith('user-123')
+  })
+
+  it('skips profile refetch when the same user is already loaded (tab refocus)', async () => {
+    const mockSession = { user: { id: 'user-123' } }
+    const mockProfile = { id: 'user-123', email: 'test@test.com', onboardingDone: true }
+
+    let capturedCallback: ((event: string, session: unknown) => void) | null = null
+    mockOnAuthStateChange.mockImplementation((cb: (event: string, session: unknown) => void) => {
+      capturedCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+    mockGetSession.mockResolvedValue({ data: { session: mockSession } })
+    mockGetUserProfile.mockResolvedValue(mockProfile)
+
+    const { result } = renderHook(() => useAuth(), { wrapper })
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    expect(result.current.user).toEqual(mockProfile)
+    expect(mockGetUserProfile).toHaveBeenCalledTimes(1)
+
+    act(() => {
+      capturedCallback!('TOKEN_REFRESHED', mockSession)
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+    })
+    expect(mockGetUserProfile).toHaveBeenCalledTimes(1)
+    expect(result.current.loading).toBe(false)
+    expect(result.current.user).toEqual(mockProfile)
+  })
+
   it('overrides onboardingDone to true when demo pending flag is set', async () => {
     const mockSession = { user: { id: 'demo-user' } }
     const mockProfile = {
@@ -126,8 +180,11 @@ describe('useAuth', () => {
 
     const { result } = renderHook(() => useAuth(), { wrapper })
 
+    act(() => {
+      capturedCallback!('SIGNED_IN', mockSession)
+    })
     await act(async () => {
-      await capturedCallback!('SIGNED_IN', mockSession)
+      await new Promise((r) => setTimeout(r, 0))
     })
 
     expect(result.current.user?.onboardingDone).toBe(true)
