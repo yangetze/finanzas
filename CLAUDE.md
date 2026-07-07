@@ -47,6 +47,12 @@ See `docs/business-context.md` for full product context.
 - **Timbrar mes** (Presupuesto): stamps budget items into `pendiente` transactions
   for the month (`lib/stampMonth.ts`); reference rates are NOT stored on budget
   items — the exchange rate belongs to the moment of the spend
+- **Budget frequencies**: weekly (Semanal) and biweekly (Quincenal) stamp one
+  transaction per occurrence within the month (every 7 / 15 days from
+  `payment_day`; `occurrenceDays` in `lib/stampMonth.ts`). Quarterly, semiannual
+  and annual require a `start_month` anchor (Mes selector in the form): annual
+  opens only that month, semiannual +6, quarterly every 3. Null anchor defaults
+  to January in BOTH flows (Timbrar mes and Abrir mes must never disagree)
 - **Sobres**: two-level hierarchy (parent groups → child envelopes). Budget form
   groups children under parents with `<optgroup>`; budget list nests items under
   parent and child headers
