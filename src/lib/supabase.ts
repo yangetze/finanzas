@@ -235,7 +235,7 @@ export async function createBudgetItem(data: {
   currencyId: string
   paymentCurrencyId?: string | null
   referenceRate?: number | null
-  frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
   spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
   walletId?: string | null
   paymentDay?: number | null
@@ -269,7 +269,7 @@ export async function updateBudgetItem(
     currencyId: string
     paymentCurrencyId: string | null
     referenceRate: number | null
-    frequency: 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+    frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
     spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
     walletId: string | null
     paymentDay: number | null

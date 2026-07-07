@@ -65,7 +65,7 @@ export interface Envelope {
   updatedAt: string
 }
 
-export type BudgetFrequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+export type BudgetFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
 export type SpendingType = 'supervivencia' | 'flexible' | 'crecimiento'
 
 export interface BudgetItem {

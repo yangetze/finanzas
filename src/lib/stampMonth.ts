@@ -1,4 +1,4 @@
-export type Frequency = 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+export type Frequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
 
 export interface BudgetItemStampInput {
   id: string
@@ -33,11 +33,26 @@ export function shouldStampThisMonth(
   startMonth: number | null,
   currentMonth: number,
 ): boolean {
-  if (frequency === 'monthly') return true
+  if (frequency === 'weekly' || frequency === 'biweekly' || frequency === 'monthly') return true
   const anchor = startMonth ?? 1
   if (frequency === 'quarterly') return (currentMonth - anchor) % 3 === 0
   if (frequency === 'semiannual') return (currentMonth - anchor) % 6 === 0
   return currentMonth === anchor
+}
+
+// Days of the month an item occurs on: weekly repeats every 7 days and
+// biweekly every 15, starting at paymentDay; other frequencies occur once.
+export function occurrenceDays(
+  frequency: Frequency,
+  paymentDay: number | null,
+  daysInMonth: number,
+): number[] {
+  const start = Math.min(paymentDay ?? 1, daysInMonth)
+  if (frequency !== 'weekly' && frequency !== 'biweekly') return [start]
+  const step = frequency === 'weekly' ? 7 : 15
+  const days: number[] = []
+  for (let day = start; day <= daysInMonth; day += step) days.push(day)
+  return days
 }
 
 export function buildStampedTransactions(
@@ -46,15 +61,14 @@ export function buildStampedTransactions(
   yearMonth: string,
   _baseCurrencyId: string,
 ): StampedTransaction[] {
-  const currentMonth = parseInt(yearMonth.split('-')[1], 10)
+  const [yearStr, monthStr] = yearMonth.split('-')
+  const currentMonth = parseInt(monthStr, 10)
+  const daysInMonth = new Date(parseInt(yearStr, 10), currentMonth, 0).getDate()
   const result: StampedTransaction[] = []
 
   for (const item of items) {
     if (alreadyStamped.has(item.id)) continue
     if (!shouldStampThisMonth(item.frequency, item.startMonth, currentMonth)) continue
-
-    const day = item.paymentDay ?? 1
-    const date = `${yearMonth}-${String(day).padStart(2, '0')}`
 
     let originCurrencyId: string
     let originAmount: number
@@ -76,19 +90,21 @@ export function buildStampedTransactions(
       conversionRate = null
     }
 
-    result.push({
-      budgetItemId: item.id,
-      envelopeId: item.envelopeId,
-      walletId: item.walletId,
-      description: item.name,
-      status: 'pendiente',
-      date,
-      originCurrencyId,
-      originAmount,
-      paymentCurrencyId,
-      paymentAmount,
-      conversionRate,
-    })
+    for (const day of occurrenceDays(item.frequency, item.paymentDay, daysInMonth)) {
+      result.push({
+        budgetItemId: item.id,
+        envelopeId: item.envelopeId,
+        walletId: item.walletId,
+        description: item.name,
+        status: 'pendiente',
+        date: `${yearMonth}-${String(day).padStart(2, '0')}`,
+        originCurrencyId,
+        originAmount,
+        paymentCurrencyId,
+        paymentAmount,
+        conversionRate,
+      })
+    }
   }
 
   return result

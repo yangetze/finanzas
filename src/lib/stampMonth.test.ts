@@ -65,6 +65,47 @@ describe('shouldStampThisMonth', () => {
     expect(shouldStampThisMonth('annual', 6, 6)).toBe(true)
     expect(shouldStampThisMonth('annual', 6, 7)).toBe(false)
   })
+
+  it('always stamps weekly and biweekly items', () => {
+    expect(shouldStampThisMonth('weekly', null, 3)).toBe(true)
+    expect(shouldStampThisMonth('weekly', 2, 8)).toBe(true)
+    expect(shouldStampThisMonth('biweekly', null, 1)).toBe(true)
+    expect(shouldStampThisMonth('biweekly', 5, 12)).toBe(true)
+  })
+})
+
+describe('buildStampedTransactions — weekly & biweekly occurrences', () => {
+  it('weekly item stamps every 7 days from paymentDay through month end', () => {
+    const weekly: BudgetItemStampInput = { ...monthly, id: 'w1', frequency: 'weekly', paymentDay: 5 }
+    const result = buildStampedTransactions([weekly], new Set(), '2026-07', BASE_CURRENCY_ID)
+    expect(result.map((t) => t.date)).toEqual(['2026-07-05', '2026-07-12', '2026-07-19', '2026-07-26'])
+    expect(result.every((t) => t.budgetItemId === 'w1')).toBe(true)
+    expect(result.every((t) => t.paymentAmount === 15)).toBe(true)
+  })
+
+  it('biweekly item stamps every 15 days from paymentDay', () => {
+    const biweekly: BudgetItemStampInput = { ...monthly, id: 'q15', frequency: 'biweekly', paymentDay: 5 }
+    const result = buildStampedTransactions([biweekly], new Set(), '2026-07', BASE_CURRENCY_ID)
+    expect(result.map((t) => t.date)).toEqual(['2026-07-05', '2026-07-20'])
+  })
+
+  it('biweekly late in the month yields a single occurrence', () => {
+    const biweekly: BudgetItemStampInput = { ...monthly, id: 'q15', frequency: 'biweekly', paymentDay: 20 }
+    const result = buildStampedTransactions([biweekly], new Set(), '2026-07', BASE_CURRENCY_ID)
+    expect(result.map((t) => t.date)).toEqual(['2026-07-20'])
+  })
+
+  it('weekly defaults to day 1 when paymentDay is null', () => {
+    const weekly: BudgetItemStampInput = { ...monthly, id: 'w1', frequency: 'weekly', paymentDay: null }
+    const result = buildStampedTransactions([weekly], new Set(), '2026-02', BASE_CURRENCY_ID)
+    expect(result.map((t) => t.date)).toEqual(['2026-02-01', '2026-02-08', '2026-02-15', '2026-02-22'])
+  })
+
+  it('weekly item already stamped is skipped entirely', () => {
+    const weekly: BudgetItemStampInput = { ...monthly, id: 'w1', frequency: 'weekly', paymentDay: 5 }
+    const result = buildStampedTransactions([weekly], new Set(['w1']), '2026-07', BASE_CURRENCY_ID)
+    expect(result).toHaveLength(0)
+  })
 })
 
 describe('buildStampedTransactions', () => {
