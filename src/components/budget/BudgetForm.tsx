@@ -15,6 +15,7 @@ interface BudgetFormValues {
   spendingType: BudgetItem['spendingType']
   walletId: string | null
   paymentDay: number | null
+  startMonth: number | null
   notes: string | null
 }
 
@@ -28,6 +29,7 @@ interface BudgetFormInitial {
   spendingType: BudgetItem['spendingType']
   walletId: string | null
   paymentDay: number | null
+  startMonth: number | null
   notes: string | null
 }
 
@@ -57,6 +59,24 @@ const SPENDING_TYPE_OPTIONS = [
   { value: 'crecimiento', label: 'Crecimiento — opcional' },
 ]
 
+const MONTH_OPTIONS = [
+  { value: '', label: 'Seleccione el mes' },
+  { value: '1', label: 'Enero' },
+  { value: '2', label: 'Febrero' },
+  { value: '3', label: 'Marzo' },
+  { value: '4', label: 'Abril' },
+  { value: '5', label: 'Mayo' },
+  { value: '6', label: 'Junio' },
+  { value: '7', label: 'Julio' },
+  { value: '8', label: 'Agosto' },
+  { value: '9', label: 'Septiembre' },
+  { value: '10', label: 'Octubre' },
+  { value: '11', label: 'Noviembre' },
+  { value: '12', label: 'Diciembre' },
+]
+
+const ANCHORED_FREQUENCIES: BudgetItem['frequency'][] = ['quarterly', 'semiannual', 'annual']
+
 export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
   const [envelopeId, setEnvelopeId] = useState(initialValues?.envelopeId ?? '')
@@ -67,9 +87,13 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
   const [spendingType, setSpendingType] = useState<BudgetItem['spendingType']>(initialValues?.spendingType ?? 'supervivencia')
   const [walletId, setWalletId] = useState<string>(initialValues?.walletId ?? '')
   const [paymentDay, setPaymentDay] = useState(initialValues?.paymentDay != null ? String(initialValues.paymentDay) : '')
+  const [startMonth, setStartMonth] = useState(initialValues?.startMonth != null ? String(initialValues.startMonth) : '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [nameError, setNameError] = useState('')
   const [envelopeError, setEnvelopeError] = useState('')
+  const [startMonthError, setStartMonthError] = useState('')
+
+  const needsStartMonth = ANCHORED_FREQUENCIES.includes(frequency)
 
   const parents = envelopes.filter((e) => e.parentId === null)
   const children = envelopes.filter((e) => e.parentId !== null)
@@ -113,6 +137,7 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
     let valid = true
     if (!name.trim()) { setNameError('El nombre es requerido'); valid = false } else setNameError('')
     if (!envelopeId) { setEnvelopeError('Seleccione un sobre'); valid = false } else setEnvelopeError('')
+    if (needsStartMonth && startMonth === '') { setStartMonthError('El mes es requerido'); valid = false } else setStartMonthError('')
     if (!valid) return
     onSubmit({
       name: name.trim(),
@@ -125,6 +150,7 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
       spendingType,
       walletId: walletId !== '' ? walletId : null,
       paymentDay: paymentDay !== '' ? Number(paymentDay) : null,
+      startMonth: needsStartMonth && startMonth !== '' ? Number(startMonth) : null,
       notes: notes.trim() || null,
     })
   }
@@ -218,6 +244,17 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
         value={frequency}
         onChange={(e) => setFrequency(e.target.value as BudgetItem['frequency'])}
       />
+
+      {needsStartMonth && (
+        <Select
+          label="Mes"
+          options={MONTH_OPTIONS}
+          value={startMonth}
+          onChange={(e) => setStartMonth(e.target.value)}
+          error={startMonthError}
+          helper={frequency === 'annual' ? 'Se abre solo en este mes' : frequency === 'semiannual' ? 'Se abre este mes y 6 meses después' : 'Se abre cada 3 meses desde este mes'}
+        />
+      )}
 
       <Input
         label="Día de pago"

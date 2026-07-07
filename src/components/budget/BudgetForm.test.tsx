@@ -93,4 +93,51 @@ describe('BudgetForm', () => {
     await userEvent.click(screen.getByRole('button', { name: /cancelar/i }))
     expect(onCancel).toHaveBeenCalled()
   })
+
+  it('hides the month selector for monthly, weekly and biweekly frequencies', async () => {
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByLabelText(/^mes$/i)).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText(/frecuencia/i), 'weekly')
+    expect(screen.queryByLabelText(/^mes$/i)).not.toBeInTheDocument()
+  })
+
+  it('shows the month selector for annual, semiannual and quarterly frequencies', async () => {
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText(/frecuencia/i), 'annual')
+    expect(screen.getByLabelText(/^mes$/i)).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByLabelText(/frecuencia/i), 'quarterly')
+    expect(screen.getByLabelText(/^mes$/i)).toBeInTheDocument()
+  })
+
+  it('requires a month for annual items', async () => {
+    const onSubmit = vi.fn()
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    await userEvent.selectOptions(screen.getByLabelText(/frecuencia/i), 'annual')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText(/el mes es requerido/i)).toBeInTheDocument()
+  })
+
+  it('submits startMonth for annual items', async () => {
+    const onSubmit = vi.fn()
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    await userEvent.selectOptions(screen.getByLabelText(/frecuencia/i), 'annual')
+    await userEvent.selectOptions(screen.getByLabelText(/^mes$/i), '3')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'annual', startMonth: 3 }),
+    )
+  })
+
+  it('submits null startMonth for monthly items', async () => {
+    const onSubmit = vi.fn()
+    render(<BudgetForm envelopes={ENVELOPES} currencies={CURRENCIES} wallets={WALLETS} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.selectOptions(screen.getByLabelText(/sobre/i), 'e1')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ frequency: 'monthly', startMonth: null }),
+    )
+  })
 })

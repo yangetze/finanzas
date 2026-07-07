@@ -64,10 +64,14 @@ describe('getApplicableItems', () => {
     expect(getApplicableItems([item], 7)).toHaveLength(0)
   })
 
-  it('includes non-monthly item with null startMonth every applicable period', () => {
-    const item = { ...BASE_ITEM, frequency: 'quarterly' as const, startMonth: null }
-    expect(getApplicableItems([item], 1)).toHaveLength(1)
-    expect(getApplicableItems([item], 2)).toHaveLength(1)
+  it('anchors null startMonth to January, matching Timbrar mes', () => {
+    const quarterly = { ...BASE_ITEM, frequency: 'quarterly' as const, startMonth: null }
+    expect(getApplicableItems([quarterly], 1)).toHaveLength(1)
+    expect(getApplicableItems([quarterly], 4)).toHaveLength(1)
+    expect(getApplicableItems([quarterly], 2)).toHaveLength(0)
+    const annual = { ...BASE_ITEM, frequency: 'annual' as const, startMonth: null }
+    expect(getApplicableItems([annual], 1)).toHaveLength(1)
+    expect(getApplicableItems([annual], 6)).toHaveLength(0)
   })
 
   it('excludes inactive items', () => {
