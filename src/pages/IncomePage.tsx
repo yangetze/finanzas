@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useTransactions, useCreateIncome, useUpdateTransaction, useDeleteTransaction, useMarkIncomeReceived } from '@/hooks/useTransactions'
+import { useTransactions, useCreateIncome, useUpdateIncome, useDeleteTransaction, useMarkIncomeReceived } from '@/hooks/useTransactions'
 import { useWallets } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
 import { IncomeRow } from '@/components/transactions/IncomeRow'
@@ -30,7 +30,7 @@ export function IncomePage() {
   const { data: currencies } = useCurrencies()
 
   const createIncome = useCreateIncome()
-  const updateTx = useUpdateTransaction()
+  const updateIncome = useUpdateIncome()
   const deleteTx = useDeleteTransaction()
   const markReceived = useMarkIncomeReceived()
 
@@ -79,8 +79,16 @@ export function IncomePage() {
       notes: values.notes,
     }
     if (editing) {
-      updateTx.mutate(
-        { id: editing.id, data: { ...payload, type: 'income' } },
+      updateIncome.mutate(
+        {
+          id: editing.id,
+          oldState: {
+            status: editing.status,
+            walletId: editing.walletId,
+            amount: editing.paymentAmount,
+          },
+          data: { ...payload, type: 'income' },
+        },
         { onSuccess: handleClose },
       )
     } else {
@@ -138,7 +146,7 @@ export function IncomePage() {
             }
             onSubmit={handleSubmit}
             onCancel={handleClose}
-            loading={createIncome.isPending || updateTx.isPending}
+            loading={createIncome.isPending || updateIncome.isPending}
           />
         </div>
       )}

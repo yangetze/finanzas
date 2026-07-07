@@ -5,6 +5,7 @@ import {
   createTransaction,
   createTransactionsBatch,
   createIncome,
+  updateIncome,
   updateTransaction,
   deleteTransaction,
   markTransactionPaid,
@@ -111,6 +112,25 @@ export function useCreateIncome() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createIncome,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['wallets'] })
+    },
+  })
+}
+
+export function useUpdateIncome() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      id,
+      oldState,
+      data,
+    }: {
+      id: string
+      oldState: { status: string; walletId: string | null; amount: number }
+      data: Parameters<typeof updateIncome>[2]
+    }) => updateIncome(id, oldState, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
       qc.invalidateQueries({ queryKey: ['wallets'] })
