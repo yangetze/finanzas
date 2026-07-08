@@ -39,6 +39,7 @@ const MOCK_ENVELOPE = {
   parentId: null,
   name: 'Hogar',
   spendCategory: null,
+  isSavings: false,
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,

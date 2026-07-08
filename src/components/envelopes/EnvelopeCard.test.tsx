@@ -9,7 +9,7 @@ const GROUP: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Hogar',
-  spendCategory: 'supervivencia',
+  spendCategory: 'supervivencia', isSavings: false,
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,
@@ -66,5 +66,55 @@ describe('EnvelopeCard', () => {
   it('renders sub-envelope without subCount display', () => {
     render(<EnvelopeCard envelope={SUB} subCount={0} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
     expect(screen.getByText('Inter')).toBeInTheDocument()
+  })
+})
+
+describe('EnvelopeCard — budget stats', () => {
+  it('shows disponible against the monthly budget', () => {
+    render(
+      <EnvelopeCard
+        envelope={SUB}
+        subCount={0}
+        stats={{ kind: 'monthly', available: 120, budget: 300, symbol: '$' }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/disponible/i)).toBeInTheDocument()
+    expect(screen.getByText(/\$ 120,00 de \$ 300,00/)).toBeInTheDocument()
+  })
+
+  it('shows negative disponible in coral', () => {
+    render(
+      <EnvelopeCard
+        envelope={SUB}
+        subCount={0}
+        stats={{ kind: 'monthly', available: -50, budget: 300, symbol: '$' }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/-\$ 50,00 de \$ 300,00/)).toBeInTheDocument()
+  })
+
+  it('shows acumulado for savings envelopes', () => {
+    render(
+      <EnvelopeCard
+        envelope={{ ...SUB, isSavings: true }}
+        subCount={0}
+        stats={{ kind: 'savings', accumulated: 1250, monthAllocated: 100, symbol: '$' }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/acumulado/i)).toBeInTheDocument()
+    expect(screen.getByText(/\$ 1\.250,00/)).toBeInTheDocument()
+    expect(screen.getByText(/\+\$ 100,00 este mes/)).toBeInTheDocument()
+  })
+
+  it('renders no stats block when stats are absent', () => {
+    render(<EnvelopeCard envelope={SUB} subCount={0} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
+    expect(screen.queryByText(/disponible/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/acumulado/i)).not.toBeInTheDocument()
   })
 })

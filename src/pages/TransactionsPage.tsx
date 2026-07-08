@@ -3,6 +3,7 @@ import { Plus, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch, useMarkTransactionPaid } from '@/hooks/useTransactions'
 import { useBudgetItems } from '@/hooks/useBudgetItems'
+import { useUpsertEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useWallets } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
@@ -41,6 +42,7 @@ export function TransactionsPage() {
   const deleteTx = useDeleteTransaction()
   const batchCreate = useCreateTransactionsBatch()
   const markPaid = useMarkTransactionPaid()
+  const upsertAllocations = useUpsertEnvelopeAllocations()
 
   const [year, monthNum] = month.split('-').map(Number)
 
@@ -149,8 +151,13 @@ export function TransactionsPage() {
           year={year}
           month={monthNum}
           baseCurrencyId={user.baseCurrencyId ?? currencies[0]?.id ?? ''}
-          onOpen={(txs) => batchCreate.mutate(txs)}
-          loading={batchCreate.isPending}
+          onOpen={(txs, allocations) => {
+            if (txs.length > 0) batchCreate.mutate(txs)
+            if (allocations.length > 0) {
+              upsertAllocations.mutate({ userId: user.id, yearMonth: month, allocations })
+            }
+          }}
+          loading={batchCreate.isPending || upsertAllocations.isPending}
         />
       )}
 

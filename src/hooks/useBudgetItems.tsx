@@ -13,6 +13,7 @@ function mapBudgetItem(row: Record<string, unknown>): BudgetItem {
     currencyId: row.currency_id as string,
     paymentCurrencyId: row.payment_currency_id as string | null,
     referenceRate: row.reference_rate as number | null,
+    itemType: (row.item_type as 'fixed' | 'allocation') ?? 'fixed',
     frequency: row.frequency as BudgetItem['frequency'],
     paymentDay: row.payment_day as number | null,
     startMonth: row.start_month as number | null,

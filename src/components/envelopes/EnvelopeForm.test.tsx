@@ -7,7 +7,7 @@ import type { Envelope } from '@/types'
 const ENVELOPES: Envelope[] = [
   {
     id: 'e1', userId: 'u1', parentId: null, name: 'Hogar',
-    spendCategory: 'supervivencia', emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
+    spendCategory: 'supervivencia', isSavings: false, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
     createdAt: '2026-01-01', updatedAt: '2026-01-01',
   },
 ]

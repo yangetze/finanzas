@@ -167,6 +167,7 @@ export async function createEnvelope(data: {
   userId: string
   name: string
   spendCategory?: 'supervivencia' | 'flexible' | 'crecimiento' | null
+  isSavings?: boolean
   parentId?: string | null
   emoji?: string | null
   notes?: string | null
@@ -176,6 +177,7 @@ export async function createEnvelope(data: {
     user_id: data.userId,
     name: data.name,
     spend_category: data.spendCategory ?? null,
+    is_savings: data.isSavings ?? false,
     parent_id: data.parentId ?? null,
     emoji: data.emoji ?? null,
     notes: data.notes ?? null,
@@ -189,6 +191,7 @@ export async function updateEnvelope(
   data: Partial<{
     name: string
     spendCategory: 'supervivencia' | 'flexible' | 'crecimiento' | null
+    isSavings: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null
@@ -198,6 +201,7 @@ export async function updateEnvelope(
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (data.name !== undefined) updates.name = data.name
   if (data.spendCategory !== undefined) updates.spend_category = data.spendCategory
+  if (data.isSavings !== undefined) updates.is_savings = data.isSavings
   if (data.parentId !== undefined) updates.parent_id = data.parentId
   if (data.emoji !== undefined) updates.emoji = data.emoji
   if (data.notes !== undefined) updates.notes = data.notes
@@ -236,6 +240,7 @@ export async function createBudgetItem(data: {
   paymentCurrencyId?: string | null
   referenceRate?: number | null
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+  itemType?: 'fixed' | 'allocation'
   spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
   walletId?: string | null
   paymentDay?: number | null
@@ -251,6 +256,7 @@ export async function createBudgetItem(data: {
     payment_currency_id: data.paymentCurrencyId ?? null,
     reference_rate: data.referenceRate ?? null,
     frequency: data.frequency,
+    item_type: data.itemType ?? 'fixed',
     spending_type: data.spendingType,
     wallet_id: data.walletId ?? null,
     payment_day: data.paymentDay ?? null,
@@ -270,6 +276,7 @@ export async function updateBudgetItem(
     paymentCurrencyId: string | null
     referenceRate: number | null
     frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual'
+    itemType: 'fixed' | 'allocation'
     spendingType: 'supervivencia' | 'flexible' | 'crecimiento'
     walletId: string | null
     paymentDay: number | null
@@ -285,6 +292,7 @@ export async function updateBudgetItem(
   if (data.paymentCurrencyId !== undefined) updates.payment_currency_id = data.paymentCurrencyId
   if (data.referenceRate !== undefined) updates.reference_rate = data.referenceRate
   if (data.frequency !== undefined) updates.frequency = data.frequency
+  if (data.itemType !== undefined) updates.item_type = data.itemType
   if (data.spendingType !== undefined) updates.spending_type = data.spendingType
   if (data.walletId !== undefined) updates.wallet_id = data.walletId
   if (data.paymentDay !== undefined) updates.payment_day = data.paymentDay
@@ -592,6 +600,36 @@ export async function updateIncome(
   for (const { walletId, delta } of deltas) {
     await adjustWalletBalance(walletId, delta)
   }
+}
+
+export async function getEnvelopeAllocations(userId: string, yearMonth?: string) {
+  let query = supabase
+    .from('envelope_allocations')
+    .select('*')
+    .eq('user_id', userId)
+  if (yearMonth) query = query.eq('year_month', yearMonth)
+  const { data, error } = await query
+  if (error) throw error
+  return data ?? []
+}
+
+export async function upsertEnvelopeAllocations(
+  userId: string,
+  yearMonth: string,
+  allocations: { envelopeId: string; currencyId: string; amount: number }[],
+) {
+  if (allocations.length === 0) return
+  const rows = allocations.map((a) => ({
+    user_id: userId,
+    envelope_id: a.envelopeId,
+    year_month: yearMonth,
+    currency_id: a.currencyId,
+    amount: a.amount,
+  }))
+  const { error } = await supabase
+    .from('envelope_allocations')
+    .upsert(rows, { onConflict: 'user_id,envelope_id,year_month,currency_id' })
+  if (error) throw error
 }
 
 export async function getTransfers(userId: string, month?: string) {

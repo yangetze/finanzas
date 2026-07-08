@@ -12,7 +12,7 @@ const BASE_ITEM: BudgetItem = {
   currencyId: 'c-usd',
   paymentCurrencyId: null,
   referenceRate: null,
-  frequency: 'monthly',
+  frequency: 'monthly', itemType: 'fixed',
   paymentDay: 10,
   startMonth: null,
   spendingType: 'flexible',

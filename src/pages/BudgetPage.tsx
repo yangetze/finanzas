@@ -83,6 +83,7 @@ export function BudgetPage() {
     paymentCurrencyId: string | null
     referenceRate: number | null
     frequency: BudgetItem['frequency']
+    itemType: BudgetItem['itemType']
     spendingType: BudgetItem['spendingType']
     walletId: string | null
     paymentDay: number | null
@@ -110,6 +111,7 @@ export function BudgetPage() {
       paymentDay: item.paymentDay,
       frequency: item.frequency,
       startMonth: item.startMonth,
+      itemType: item.itemType,
     }))
     stampMonth.mutate({
       userId: user.id,
@@ -194,6 +196,7 @@ export function BudgetPage() {
                     baseAmount: editing.baseAmount,
                     paymentCurrencyId: editing.paymentCurrencyId,
                     frequency: editing.frequency,
+                    itemType: editing.itemType,
                     spendingType: editing.spendingType,
                     walletId: editing.walletId,
                     paymentDay: editing.paymentDay,

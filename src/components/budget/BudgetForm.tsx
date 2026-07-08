@@ -12,6 +12,7 @@ interface BudgetFormValues {
   paymentCurrencyId: string | null
   referenceRate: number | null
   frequency: BudgetItem['frequency']
+  itemType: BudgetItem['itemType']
   spendingType: BudgetItem['spendingType']
   walletId: string | null
   paymentDay: number | null
@@ -26,6 +27,7 @@ interface BudgetFormInitial {
   baseAmount: number
   paymentCurrencyId: string | null
   frequency: BudgetItem['frequency']
+  itemType: BudgetItem['itemType']
   spendingType: BudgetItem['spendingType']
   walletId: string | null
   paymentDay: number | null
@@ -75,6 +77,11 @@ const MONTH_OPTIONS = [
   { value: '12', label: 'Diciembre' },
 ]
 
+const ITEM_TYPE_OPTIONS = [
+  { value: 'fixed', label: 'Fija — genera pago pendiente' },
+  { value: 'allocation', label: 'Asignación — presupuesto del sobre' },
+]
+
 const ANCHORED_FREQUENCIES: BudgetItem['frequency'][] = ['quarterly', 'semiannual', 'annual']
 
 export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, initialValues, onSubmit, onCancel, loading }: BudgetFormProps) {
@@ -84,6 +91,7 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
   const [baseAmount, setBaseAmount] = useState(initialValues?.baseAmount != null ? String(initialValues.baseAmount) : '')
   const [paymentCurrencyId, setPaymentCurrencyId] = useState<string>(initialValues?.paymentCurrencyId ?? '')
   const [frequency, setFrequency] = useState<BudgetItem['frequency']>(initialValues?.frequency ?? 'monthly')
+  const [itemType, setItemType] = useState<BudgetItem['itemType']>(initialValues?.itemType ?? 'fixed')
   const [spendingType, setSpendingType] = useState<BudgetItem['spendingType']>(initialValues?.spendingType ?? 'supervivencia')
   const [walletId, setWalletId] = useState<string>(initialValues?.walletId ?? '')
   const [paymentDay, setPaymentDay] = useState(initialValues?.paymentDay != null ? String(initialValues.paymentDay) : '')
@@ -147,6 +155,7 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
       paymentCurrencyId: paymentCurrencyId !== '' ? paymentCurrencyId : null,
       referenceRate: null,
       frequency,
+      itemType,
       spendingType,
       walletId: walletId !== '' ? walletId : null,
       paymentDay: paymentDay !== '' ? Number(paymentDay) : null,
@@ -230,6 +239,14 @@ export function BudgetForm({ envelopes, currencies, wallets, multiCurrency, init
           onChange={(e) => setPaymentCurrencyId(e.target.value)}
         />
       )}
+
+      <Select
+        label="Tipo de partida"
+        options={ITEM_TYPE_OPTIONS}
+        value={itemType}
+        onChange={(e) => setItemType(e.target.value as BudgetItem['itemType'])}
+        helper={itemType === 'allocation' ? 'Define el presupuesto mensual del sobre; no crea una transacción pendiente' : 'Crea una transacción pendiente al timbrar el mes'}
+      />
 
       <Select
         label="Tipo de gasto"

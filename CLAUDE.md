@@ -56,6 +56,15 @@ See `docs/business-context.md` for full product context.
 - **Sobres**: two-level hierarchy (parent groups → child envelopes). Budget form
   groups children under parents with `<optgroup>`; budget list nests items under
   parent and child headers
+- **Budget item types**: `item_type = 'fixed'` stamps payable pendiente
+  transactions (bills); `'allocation'` writes the envelope's monthly budget into
+  `envelope_allocations` (via `buildAllocations` in `lib/stampMonth.ts`) without
+  creating a fake payable. Both Timbrar mes and Abrir mes write allocations
+- **Envelope stats** (Sobres cards): normal envelopes show Disponible =
+  allocation(month) − spent(month), resetting monthly. Savings envelopes
+  (`envelopes.is_savings`) accumulate instead: Acumulado = Σ allocations −
+  Σ spent, all time — contributions come from allocations, spends from normal
+  expenses against the envelope
 - **Auth**: never `await` a Supabase call inside `onAuthStateChange` — supabase-js
   holds its auth lock during dispatch and the app deadlocks (frozen spinner on tab
   refocus). Defer to a macrotask; skip profile refetch when the same user is loaded

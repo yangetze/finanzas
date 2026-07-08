@@ -2,19 +2,60 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useEnvelopes, useCreateEnvelope, useUpdateEnvelope, useDeactivateEnvelope } from '@/hooks/useEnvelopes'
-import { EnvelopeCard } from '@/components/envelopes/EnvelopeCard'
+import { useEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
+import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
+import { useCurrencies } from '@/hooks/useCurrencies'
+import { EnvelopeCard, type EnvelopeStats } from '@/components/envelopes/EnvelopeCard'
 import { EnvelopeForm } from '@/components/envelopes/EnvelopeForm'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ScrollAnchor } from '@/components/ui/ScrollAnchor'
 import type { Envelope } from '@/types'
 
+function currentMonth() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
 export function EnvelopesPage() {
   const { user } = useAuth()
+  const month = currentMonth()
   const { data: envelopes, isLoading } = useEnvelopes(user?.id)
+  const { data: monthAllocations } = useEnvelopeAllocations(user?.id, month)
+  const { data: allAllocations } = useEnvelopeAllocations(user?.id)
+  const { data: monthSpending } = useEnvelopeSpending(user?.id, month)
+  const { data: allSpending } = useEnvelopeSpending(user?.id)
+  const { data: currencies } = useCurrencies()
   const createEnvelope = useCreateEnvelope()
   const updateEnvelope = useUpdateEnvelope()
   const deactivateEnvelope = useDeactivateEnvelope()
+
+  function statsFor(envelope: Envelope): EnvelopeStats | undefined {
+    const symbolOf = (currencyId: string | undefined) =>
+      currencies?.find((c) => c.id === currencyId)?.symbol ?? ''
+
+    if (envelope.isSavings) {
+      const allocs = (allAllocations ?? []).filter((a) => a.envelopeId === envelope.id)
+      const spent = allSpending?.find((s) => s.envelopeId === envelope.id)?.spent ?? 0
+      if (allocs.length === 0 && spent === 0) return undefined
+      const allocated = allocs.reduce((sum, a) => sum + a.amount, 0)
+      const monthAllocated = (monthAllocations ?? [])
+        .filter((a) => a.envelopeId === envelope.id)
+        .reduce((sum, a) => sum + a.amount, 0)
+      return {
+        kind: 'savings',
+        accumulated: allocated - spent,
+        monthAllocated,
+        symbol: symbolOf(allocs[0]?.currencyId),
+      }
+    }
+
+    const allocs = (monthAllocations ?? []).filter((a) => a.envelopeId === envelope.id)
+    if (allocs.length === 0) return undefined
+    const budget = allocs.reduce((sum, a) => sum + a.amount, 0)
+    const spent = monthSpending?.find((s) => s.envelopeId === envelope.id)?.spent ?? 0
+    return { kind: 'monthly', available: budget - spent, budget, symbol: symbolOf(allocs[0]?.currencyId) }
+  }
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Envelope | null>(null)
@@ -42,6 +83,7 @@ export function EnvelopesPage() {
   function handleSubmit(values: {
     name: string
     spendCategory: Envelope['spendCategory']
+    isSavings: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null
@@ -115,6 +157,7 @@ export function EnvelopesPage() {
                 subCount={count}
                 isExpanded={expanded}
                 onToggle={() => toggleGroup(group.id)}
+                stats={statsFor(group)}
                 onEdit={handleEdit}
                 onDeactivate={(id) => deactivateEnvelope.mutate(id)}
               />
@@ -126,6 +169,7 @@ export function EnvelopesPage() {
                       key={sub.id}
                       envelope={sub}
                       subCount={0}
+                      stats={statsFor(sub)}
                       onEdit={handleEdit}
                       onDeactivate={(id) => deactivateEnvelope.mutate(id)}
                     />
@@ -140,6 +184,7 @@ export function EnvelopesPage() {
               key={orphan.id}
               envelope={orphan}
               subCount={0}
+              stats={statsFor(orphan)}
               onEdit={handleEdit}
               onDeactivate={(id) => deactivateEnvelope.mutate(id)}
             />
