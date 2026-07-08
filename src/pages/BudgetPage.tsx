@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Stamp } from 'lucide-react'
+import { Plus, CalendarPlus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudgetItems, useCreateBudgetItem, useUpdateBudgetItem, useDeactivateBudgetItem } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
@@ -150,8 +150,8 @@ export function BudgetPage() {
               loading={stampMonth.isPending}
               disabled={!user?.baseCurrencyId}
             >
-              <Stamp size={16} />
-              Timbrar mes
+              <CalendarPlus size={16} />
+              Abrir mes
             </Button>
           )}
           <Button size="sm" onClick={() => setShowForm(true)} disabled={!envelopes?.length}>

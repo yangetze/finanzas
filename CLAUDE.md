@@ -44,22 +44,23 @@ See `docs/business-context.md` for full product context.
   touch wallet balances (the commission already left as part of `amount_sent`).
   Zero commission → transfer record only, no transaction. Create + delete only
   (delete fully reverses balances and voids the linked expense); no editing
-- **Timbrar mes** (Presupuesto): stamps budget items into `pendiente` transactions
-  for the month (`lib/stampMonth.ts`); reference rates are NOT stored on budget
-  items — the exchange rate belongs to the moment of the spend
+- **Abrir mes** (button on both Presupuesto and Gastos — formerly "Timbrar mes"):
+  stamps budget items into `pendiente` transactions for the month
+  (`lib/stampMonth.ts` / `lib/monthOpener.ts`); reference rates are NOT stored on
+  budget items — the exchange rate belongs to the moment of the spend
 - **Budget frequencies**: weekly (Semanal) and biweekly (Quincenal) stamp one
   transaction per occurrence within the month (every 7 / 15 days from
   `payment_day`; `occurrenceDays` in `lib/stampMonth.ts`). Quarterly, semiannual
   and annual require a `start_month` anchor (Mes selector in the form): annual
   opens only that month, semiannual +6, quarterly every 3. Null anchor defaults
-  to January in BOTH flows (Timbrar mes and Abrir mes must never disagree)
+  to January in BOTH flows (Presupuesto and Gastos Abrir mes must never disagree)
 - **Sobres**: two-level hierarchy (parent groups → child envelopes). Budget form
   groups children under parents with `<optgroup>`; budget list nests items under
   parent and child headers
 - **Budget item types**: `item_type = 'fixed'` stamps payable pendiente
   transactions (bills); `'allocation'` writes the envelope's monthly budget into
   `envelope_allocations` (via `buildAllocations` in `lib/stampMonth.ts`) without
-  creating a fake payable. Both Timbrar mes and Abrir mes write allocations
+  creating a fake payable. Abrir mes writes allocations from BOTH pages
 - **Envelope stats** (Sobres cards): normal envelopes show Disponible =
   allocation(month) − spent(month), resetting monthly. Savings envelopes
   (`envelopes.is_savings`) accumulate instead: Acumulado = Σ allocations −
@@ -123,7 +124,7 @@ src/
   lib/
     supabase.ts    ← client, auth helpers, DB helpers (incl. transfers, income)
     budgetTotals.ts← sumByCurrency, isMissingRateForSingleCurrencySum
-    stampMonth.ts  ← buildStampedTransactions (Timbrar mes)
+    stampMonth.ts  ← buildStampedTransactions, buildAllocations (Abrir mes)
     utils.ts       ← formatCurrency, formatDate, calcBaseAmount
   pages/
   types/
