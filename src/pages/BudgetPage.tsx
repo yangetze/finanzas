@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Stamp } from 'lucide-react'
+import { Plus, CalendarPlus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useBudgetItems, useCreateBudgetItem, useUpdateBudgetItem, useDeactivateBudgetItem } from '@/hooks/useBudgetItems'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
@@ -83,6 +83,7 @@ export function BudgetPage() {
     paymentCurrencyId: string | null
     referenceRate: number | null
     frequency: BudgetItem['frequency']
+    itemType: BudgetItem['itemType']
     spendingType: BudgetItem['spendingType']
     walletId: string | null
     paymentDay: number | null
@@ -110,6 +111,7 @@ export function BudgetPage() {
       paymentDay: item.paymentDay,
       frequency: item.frequency,
       startMonth: item.startMonth,
+      itemType: item.itemType,
     }))
     stampMonth.mutate({
       userId: user.id,
@@ -148,8 +150,8 @@ export function BudgetPage() {
               loading={stampMonth.isPending}
               disabled={!user?.baseCurrencyId}
             >
-              <Stamp size={16} />
-              Timbrar mes
+              <CalendarPlus size={16} />
+              Abrir mes
             </Button>
           )}
           <Button size="sm" onClick={() => setShowForm(true)} disabled={!envelopes?.length}>
@@ -194,6 +196,7 @@ export function BudgetPage() {
                     baseAmount: editing.baseAmount,
                     paymentCurrencyId: editing.paymentCurrencyId,
                     frequency: editing.frequency,
+                    itemType: editing.itemType,
                     spendingType: editing.spendingType,
                     walletId: editing.walletId,
                     paymentDay: editing.paymentDay,

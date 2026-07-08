@@ -12,6 +12,13 @@ export interface BudgetItemStampInput {
   paymentDay: number | null
   frequency: Frequency
   startMonth: number | null
+  itemType?: 'fixed' | 'allocation'
+}
+
+export interface EnvelopeAllocationInput {
+  envelopeId: string
+  currencyId: string
+  amount: number
 }
 
 export interface StampedTransaction {
@@ -67,6 +74,7 @@ export function buildStampedTransactions(
   const result: StampedTransaction[] = []
 
   for (const item of items) {
+    if (item.itemType === 'allocation') continue
     if (alreadyStamped.has(item.id)) continue
     if (!shouldStampThisMonth(item.frequency, item.startMonth, currentMonth)) continue
 
@@ -108,4 +116,28 @@ export function buildStampedTransactions(
   }
 
   return result
+}
+
+// The month's budget per envelope from allocation-type items: each
+// applicable item contributes amount × occurrences (weekly ×4-5,
+// biweekly ×1-2, others ×1), summed per envelope and currency.
+export function buildAllocations(
+  items: BudgetItemStampInput[],
+  yearMonth: string,
+): EnvelopeAllocationInput[] {
+  const [yearStr, monthStr] = yearMonth.split('-')
+  const currentMonth = parseInt(monthStr, 10)
+  const daysInMonth = new Date(parseInt(yearStr, 10), currentMonth, 0).getDate()
+
+  const totals = new Map<string, EnvelopeAllocationInput>()
+  for (const item of items) {
+    if (item.itemType !== 'allocation') continue
+    if (!shouldStampThisMonth(item.frequency, item.startMonth, currentMonth)) continue
+    const occurrences = occurrenceDays(item.frequency, item.paymentDay, daysInMonth).length
+    const key = `${item.envelopeId}|${item.currencyId}`
+    const existing = totals.get(key)
+    if (existing) existing.amount += item.baseAmount * occurrences
+    else totals.set(key, { envelopeId: item.envelopeId, currencyId: item.currencyId, amount: item.baseAmount * occurrences })
+  }
+  return [...totals.values()]
 }

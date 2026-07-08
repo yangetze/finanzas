@@ -6,9 +6,10 @@ export interface EnvelopeSpending {
   spent: number
 }
 
-export function useEnvelopeSpending(userId: string | undefined, month: string) {
+// Without month: all-time spending per envelope (savings accumulation).
+export function useEnvelopeSpending(userId: string | undefined, month?: string) {
   return useQuery({
-    queryKey: ['envelope-spending', userId, month],
+    queryKey: ['envelope-spending', userId, month ?? 'all'],
     queryFn: async () => {
       const rows = await getTransactions(userId!, month)
       const map = new Map<string, number>()

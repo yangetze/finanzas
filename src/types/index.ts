@@ -57,6 +57,7 @@ export interface Envelope {
   parentId: string | null
   name: string
   spendCategory: SpendingType | null
+  isSavings: boolean
   emoji: string | null
   isActive: boolean
   sortOrder: number
@@ -79,6 +80,7 @@ export interface BudgetItem {
   paymentCurrencyId: string | null
   referenceRate: number | null
   frequency: BudgetFrequency
+  itemType: 'fixed' | 'allocation'
   paymentDay: number | null
   startMonth: number | null
   spendingType: SpendingType

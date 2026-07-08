@@ -14,7 +14,7 @@ const ITEM: BudgetItem = {
   currencyId: 'c1',
   paymentCurrencyId: null,
   referenceRate: null,
-  frequency: 'monthly',
+  frequency: 'monthly', itemType: 'fixed',
   paymentDay: 10,
   startMonth: null,
   spendingType: 'flexible',

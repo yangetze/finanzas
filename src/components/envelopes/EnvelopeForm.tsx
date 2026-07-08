@@ -7,6 +7,7 @@ import type { Envelope, SpendingType } from '@/types'
 interface EnvelopeFormValues {
   name: string
   spendCategory: SpendingType | null
+  isSavings: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -15,6 +16,7 @@ interface EnvelopeFormValues {
 interface EnvelopeFormInitial {
   name: string
   spendCategory?: SpendingType | null
+  isSavings?: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -40,6 +42,7 @@ const NO_PARENT = '__none__'
 export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loading }: EnvelopeFormProps) {
   const [name, setName] = useState(initialValues?.name ?? '')
   const [spendCategory, setSpendCategory] = useState<SpendingType | null>(initialValues?.spendCategory ?? null)
+  const [isSavings, setIsSavings] = useState(initialValues?.isSavings ?? false)
   const [parentId, setParentId] = useState(initialValues?.parentId ?? NO_PARENT)
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
@@ -62,6 +65,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
     onSubmit({
       name: name.trim(),
       spendCategory,
+      isSavings,
       parentId: parentId === NO_PARENT ? null : parentId,
       emoji: emoji.trim() || null,
       notes: notes.trim() || null,
@@ -104,6 +108,17 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
         value={parentId}
         onChange={(e) => setParentId(e.target.value)}
       />
+
+      <label className="flex items-center gap-2.5 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isSavings}
+          onChange={(e) => setIsSavings(e.target.checked)}
+          className="w-4 h-4 rounded border-border bg-canvas-soft accent-gold"
+        />
+        <span className="text-sm font-ui text-ink">Sobre de ahorro</span>
+        <span className="text-xs font-ui text-ink-faint">— acumula mes a mes en vez de reiniciarse</span>
+      </label>
 
       <Input
         label="Notas"

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildStampedTransactions, shouldStampThisMonth } from './stampMonth'
+import { buildStampedTransactions, buildAllocations, shouldStampThisMonth } from './stampMonth'
 import type { BudgetItemStampInput } from './stampMonth'
 
 const BASE_CURRENCY_ID = 'base-usd'
@@ -105,6 +105,54 @@ describe('buildStampedTransactions — weekly & biweekly occurrences', () => {
     const weekly: BudgetItemStampInput = { ...monthly, id: 'w1', frequency: 'weekly', paymentDay: 5 }
     const result = buildStampedTransactions([weekly], new Set(['w1']), '2026-07', BASE_CURRENCY_ID)
     expect(result).toHaveLength(0)
+  })
+
+  it('allocation items do not stamp transactions', () => {
+    const allocation: BudgetItemStampInput = { ...monthly, id: 'a1', itemType: 'allocation' }
+    const result = buildStampedTransactions([allocation], new Set(), '2026-07', BASE_CURRENCY_ID)
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('buildAllocations', () => {
+  const mercado: BudgetItemStampInput = {
+    ...monthly,
+    id: 'a1',
+    envelopeId: 'env-mercado',
+    name: 'Mercado',
+    baseAmount: 300,
+    itemType: 'allocation',
+  }
+
+  it('produces an allocation per envelope for allocation items', () => {
+    expect(buildAllocations([mercado], '2026-07')).toEqual([
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 300 },
+    ])
+  })
+
+  it('ignores fixed items', () => {
+    expect(buildAllocations([monthly], '2026-07')).toEqual([])
+  })
+
+  it('multiplies weekly allocations by occurrences in the month', () => {
+    const weekly: BudgetItemStampInput = { ...mercado, frequency: 'weekly', paymentDay: 5, baseAmount: 50 }
+    // July 2026, day 5: occurrences on 5, 12, 19, 26 → 4 × 50
+    expect(buildAllocations([weekly], '2026-07')).toEqual([
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 200 },
+    ])
+  })
+
+  it('sums multiple allocation items of the same envelope and currency', () => {
+    const extra: BudgetItemStampInput = { ...mercado, id: 'a2', baseAmount: 100 }
+    expect(buildAllocations([mercado, extra], '2026-07')).toEqual([
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 400 },
+    ])
+  })
+
+  it('skips anchored allocations outside their month', () => {
+    const annual: BudgetItemStampInput = { ...mercado, frequency: 'annual', startMonth: 3 }
+    expect(buildAllocations([annual], '2026-07')).toEqual([])
+    expect(buildAllocations([annual], '2026-03')).toHaveLength(1)
   })
 })
 

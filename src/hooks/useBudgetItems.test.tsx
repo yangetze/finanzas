@@ -44,6 +44,7 @@ const MOCK_ITEM = {
   baseAmount: 40,
   currencyId: 'c1',
   frequency: 'monthly',
+  itemType: 'fixed',
   paymentDay: 15,
   startMonth: null,
   spendingType: 'supervivencia',

@@ -82,7 +82,7 @@ pnpm dev
 | Sobres | Sobres con jerarquía grupo → sub-sobre, colapsables |
 | Gastos | Registro de gastos multi-moneda, estados apartado/pendiente/pagado, compras Cashea en cuotas |
 | Ingresos | Registro de ingresos con estados Pendiente (esperado) y Recibido; al recibir acredita la billetera |
-| Presupuesto | Plantilla mensual de partidas agrupadas por sobre, totales por moneda, "Timbrar mes" genera los gastos pendientes del mes |
+| Presupuesto | Plantilla mensual de partidas agrupadas por sobre, totales por moneda, "Abrir mes" genera los gastos pendientes y asignaciones del mes |
 | Deudas | Dashboard de TDC (límite, usado, disponible) y grupos Cashea |
 | Metas | BabySteps con progreso |
 | Tasas | Tasas de cambio (solo admin) |
