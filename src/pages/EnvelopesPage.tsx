@@ -46,7 +46,7 @@ export function EnvelopesPage() {
     if (envelope.isSavings) {
       const allocs = (allAllocations ?? []).filter((a) => a.envelopeId === envelope.id)
       const spent = allSpending?.find((s) => s.envelopeId === envelope.id)?.spent ?? 0
-      if (allocs.length === 0 && spent === 0) return undefined
+      if (allocs.length === 0 && spent === 0 && !envelope.targetAmount) return undefined
       const allocated = allocs.reduce((sum, a) => sum + a.amount, 0)
       const monthAllocated = (monthAllocations ?? [])
         .filter((a) => a.envelopeId === envelope.id)
@@ -58,6 +58,7 @@ export function EnvelopesPage() {
         monthAllocated,
         symbol: symbolOf(allocs[0]?.currencyId),
         walletName: walletNameOf(walletId),
+        target: envelope.targetAmount,
       }
     }
 
@@ -107,6 +108,7 @@ export function EnvelopesPage() {
     name: string
     spendCategory: Envelope['spendCategory']
     isSavings: boolean
+    targetAmount: number | null
     parentId: string | null
     emoji: string | null
     notes: string | null

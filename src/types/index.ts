@@ -58,6 +58,7 @@ export interface Envelope {
   name: string
   spendCategory: SpendingType | null
   isSavings: boolean
+  targetAmount: number | null
   emoji: string | null
   isActive: boolean
   sortOrder: number

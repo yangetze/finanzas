@@ -8,6 +8,7 @@ interface EnvelopeFormValues {
   name: string
   spendCategory: SpendingType | null
   isSavings: boolean
+  targetAmount: number | null
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -17,6 +18,7 @@ interface EnvelopeFormInitial {
   name: string
   spendCategory?: SpendingType | null
   isSavings?: boolean
+  targetAmount?: number | null
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -43,6 +45,9 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
   const [name, setName] = useState(initialValues?.name ?? '')
   const [spendCategory, setSpendCategory] = useState<SpendingType | null>(initialValues?.spendCategory ?? null)
   const [isSavings, setIsSavings] = useState(initialValues?.isSavings ?? false)
+  const [targetAmount, setTargetAmount] = useState(
+    initialValues?.targetAmount != null ? String(initialValues.targetAmount) : '',
+  )
   const [parentId, setParentId] = useState(initialValues?.parentId ?? NO_PARENT)
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
@@ -66,6 +71,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
       name: name.trim(),
       spendCategory,
       isSavings,
+      targetAmount: targetAmount.trim() === '' ? null : Number(targetAmount),
       parentId: parentId === NO_PARENT ? null : parentId,
       emoji: emoji.trim() || null,
       notes: notes.trim() || null,
@@ -119,6 +125,17 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
         <span className="text-sm font-ui text-ink">Sobre de ahorro</span>
         <span className="text-xs font-ui text-ink-faint">— acumula mes a mes en vez de reiniciarse</span>
       </label>
+
+      {isSavings && (
+        <Input
+          label="Meta de ahorro"
+          type="number"
+          step="0.01"
+          value={targetAmount}
+          onChange={(e) => setTargetAmount(e.target.value)}
+          placeholder="Opcional — ej. 1000"
+        />
+      )}
 
       <Input
         label="Notas"
