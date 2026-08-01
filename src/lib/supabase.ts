@@ -37,6 +37,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
     baseCurrencyId: data.base_currency_id,
     country: data.country,
     multiCurrency: data.multi_currency,
+    emergencyFundTarget: data.emergency_fund_target ?? 1000,
     isAdmin: data.is_admin ?? false,
     onboardingDone: data.onboarding_done,
     createdAt: data.created_at,
@@ -51,6 +52,7 @@ export async function updateUserProfile(
     baseCurrencyId: string
     country: string
     multiCurrency: boolean
+    emergencyFundTarget: number
     onboardingDone: boolean
   }>,
 ) {
@@ -59,6 +61,7 @@ export async function updateUserProfile(
   if (updates.baseCurrencyId !== undefined) dbUpdates.base_currency_id = updates.baseCurrencyId
   if (updates.country !== undefined) dbUpdates.country = updates.country
   if (updates.multiCurrency !== undefined) dbUpdates.multi_currency = updates.multiCurrency
+  if (updates.emergencyFundTarget !== undefined) dbUpdates.emergency_fund_target = updates.emergencyFundTarget
   if (updates.onboardingDone !== undefined) dbUpdates.onboarding_done = updates.onboardingDone
 
   return supabase.from('users').update(dbUpdates).eq('id', userId)
@@ -169,6 +172,7 @@ export async function createEnvelope(data: {
   spendCategory?: 'supervivencia' | 'flexible' | 'crecimiento' | null
   isSavings?: boolean
   targetAmount?: number | null
+  isEmergencyFund?: boolean
   parentId?: string | null
   emoji?: string | null
   notes?: string | null
@@ -180,6 +184,7 @@ export async function createEnvelope(data: {
     spend_category: data.spendCategory ?? null,
     is_savings: data.isSavings ?? false,
     target_amount: data.targetAmount ?? null,
+    is_emergency_fund: data.isEmergencyFund ?? false,
     parent_id: data.parentId ?? null,
     emoji: data.emoji ?? null,
     notes: data.notes ?? null,
@@ -195,6 +200,7 @@ export async function updateEnvelope(
     spendCategory: 'supervivencia' | 'flexible' | 'crecimiento' | null
     isSavings: boolean
     targetAmount: number | null
+    isEmergencyFund: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null
@@ -206,6 +212,7 @@ export async function updateEnvelope(
   if (data.spendCategory !== undefined) updates.spend_category = data.spendCategory
   if (data.isSavings !== undefined) updates.is_savings = data.isSavings
   if (data.targetAmount !== undefined) updates.target_amount = data.targetAmount
+  if (data.isEmergencyFund !== undefined) updates.is_emergency_fund = data.isEmergencyFund
   if (data.parentId !== undefined) updates.parent_id = data.parentId
   if (data.emoji !== undefined) updates.emoji = data.emoji
   if (data.notes !== undefined) updates.notes = data.notes

@@ -28,6 +28,7 @@ export interface UserProfile {
   baseCurrencyId: string | null
   country: string | null
   multiCurrency: boolean
+  emergencyFundTarget: number
   isAdmin: boolean
   onboardingDone: boolean
   createdAt: string
@@ -59,6 +60,7 @@ export interface Envelope {
   spendCategory: SpendingType | null
   isSavings: boolean
   targetAmount: number | null
+  isEmergencyFund: boolean
   emoji: string | null
   isActive: boolean
   sortOrder: number

@@ -7,7 +7,7 @@ import type { Envelope } from '@/types'
 const ENVELOPES: Envelope[] = [
   {
     id: 'e1', userId: 'u1', parentId: null, name: 'Hogar',
-    spendCategory: 'supervivencia', isSavings: false, targetAmount: null, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
+    spendCategory: 'supervivencia', isSavings: false, targetAmount: null, isEmergencyFund: false, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
     createdAt: '2026-01-01', updatedAt: '2026-01-01',
   },
 ]
@@ -116,5 +116,43 @@ describe('EnvelopeForm', () => {
     }
     render(<EnvelopeForm envelopes={ENVELOPES} initialValues={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />)
     expect((screen.getByLabelText(/meta de ahorro/i) as HTMLInputElement).value).toBe('1000')
+  })
+
+  it('does not show the emergency fund checkbox until "Sobre de ahorro" is checked', () => {
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByLabelText(/fondo de emergencia/i)).not.toBeInTheDocument()
+  })
+
+  it('submits isEmergencyFund true when the checkbox is checked', async () => {
+    const onSubmit = vi.fn()
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'Fondo Emergencia USD')
+    await userEvent.click(screen.getByLabelText(/sobre de ahorro/i))
+    await userEvent.click(screen.getByLabelText(/fondo de emergencia/i))
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isEmergencyFund: true }))
+  })
+
+  it('submits isEmergencyFund false by default', async () => {
+    const onSubmit = vi.fn()
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'Viaje')
+    await userEvent.click(screen.getByLabelText(/sobre de ahorro/i))
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isEmergencyFund: false }))
+  })
+
+  it('pre-fills the emergency fund checkbox when editing', () => {
+    const initial = {
+      name: 'Fondo Emergencia USD',
+      spendCategory: null,
+      isSavings: true,
+      isEmergencyFund: true,
+      parentId: null,
+      emoji: null,
+      notes: null,
+    }
+    render(<EnvelopeForm envelopes={ENVELOPES} initialValues={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect((screen.getByLabelText(/fondo de emergencia/i) as HTMLInputElement).checked).toBe(true)
   })
 })

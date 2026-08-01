@@ -109,6 +109,7 @@ export function EnvelopesPage() {
     spendCategory: Envelope['spendCategory']
     isSavings: boolean
     targetAmount: number | null
+    isEmergencyFund: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null
