@@ -126,7 +126,7 @@ describe('buildAllocations', () => {
 
   it('produces an allocation per envelope for allocation items', () => {
     expect(buildAllocations([mercado], '2026-07')).toEqual([
-      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 300 },
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 300, walletId: 'wallet-1' },
     ])
   })
 
@@ -138,14 +138,14 @@ describe('buildAllocations', () => {
     const weekly: BudgetItemStampInput = { ...mercado, frequency: 'weekly', paymentDay: 5, baseAmount: 50 }
     // July 2026, day 5: occurrences on 5, 12, 19, 26 → 4 × 50
     expect(buildAllocations([weekly], '2026-07')).toEqual([
-      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 200 },
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 200, walletId: 'wallet-1' },
     ])
   })
 
   it('sums multiple allocation items of the same envelope and currency', () => {
     const extra: BudgetItemStampInput = { ...mercado, id: 'a2', baseAmount: 100 }
     expect(buildAllocations([mercado, extra], '2026-07')).toEqual([
-      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 400 },
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 400, walletId: 'wallet-1' },
     ])
   })
 
@@ -153,6 +153,20 @@ describe('buildAllocations', () => {
     const annual: BudgetItemStampInput = { ...mercado, frequency: 'annual', startMonth: 3 }
     expect(buildAllocations([annual], '2026-07')).toEqual([])
     expect(buildAllocations([annual], '2026-03')).toHaveLength(1)
+  })
+
+  it('keeps the first item wallet when later items for the same envelope point elsewhere', () => {
+    const otherWallet: BudgetItemStampInput = { ...mercado, id: 'a2', baseAmount: 50, walletId: 'wallet-2' }
+    expect(buildAllocations([mercado, otherWallet], '2026-07')).toEqual([
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 350, walletId: 'wallet-1' },
+    ])
+  })
+
+  it('carries a null walletId through when the item has none', () => {
+    const noWallet: BudgetItemStampInput = { ...mercado, walletId: null }
+    expect(buildAllocations([noWallet], '2026-07')).toEqual([
+      { envelopeId: 'env-mercado', currencyId: USDC_ID, amount: 300, walletId: null },
+    ])
   })
 })
 

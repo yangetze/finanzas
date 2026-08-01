@@ -1,4 +1,4 @@
-import { ChevronDown, Pencil, PiggyBank, PowerOff } from 'lucide-react'
+import { ChevronDown, Pencil, PiggyBank, PowerOff, Wallet } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
@@ -19,7 +19,7 @@ const SPEND_COLORS: Record<SpendingType, string> = {
 
 export type EnvelopeStats =
   | { kind: 'monthly'; available: number; budget: number; symbol: string }
-  | { kind: 'savings'; accumulated: number; monthAllocated: number; symbol: string }
+  | { kind: 'savings'; accumulated: number; monthAllocated: number; symbol: string; walletName?: string | null }
 
 interface EnvelopeCardProps {
   envelope: Envelope
@@ -95,21 +95,29 @@ export function EnvelopeCard({ envelope, subCount, isExpanded, onToggle, stats, 
       )}
 
       {stats?.kind === 'savings' && (
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-xs font-ui text-ink-faint">
-            <PiggyBank size={13} className="text-gold" />
-            Acumulado
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="text-xs font-mono font-semibold text-gold">
-              {fmt(stats.accumulated, stats.symbol)}
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-xs font-ui text-ink-faint">
+              <PiggyBank size={13} className="text-gold" />
+              Acumulado
             </span>
-            {stats.monthAllocated > 0 && (
-              <span className="text-xs font-mono text-sage">
-                +{fmt(stats.monthAllocated, stats.symbol)} este mes
+            <span className="flex items-center gap-2">
+              <span className="text-xs font-mono font-semibold text-gold">
+                {fmt(stats.accumulated, stats.symbol)}
               </span>
-            )}
-          </span>
+              {stats.monthAllocated > 0 && (
+                <span className="text-xs font-mono text-sage">
+                  +{fmt(stats.monthAllocated, stats.symbol)} este mes
+                </span>
+              )}
+            </span>
+          </div>
+          {stats.walletName && (
+            <span className="flex items-center gap-1.5 text-xs font-ui text-ink-faint">
+              <Wallet size={12} />
+              {stats.walletName}
+            </span>
+          )}
         </div>
       )}
     </Card>

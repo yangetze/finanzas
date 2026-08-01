@@ -5,11 +5,14 @@ import { useEnvelopes, useCreateEnvelope, useUpdateEnvelope, useDeactivateEnvelo
 import { useEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
 import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { useWallets } from '@/hooks/useWallets'
 import { EnvelopeCard, type EnvelopeStats } from '@/components/envelopes/EnvelopeCard'
 import { EnvelopeForm } from '@/components/envelopes/EnvelopeForm'
+import { SavingsByWalletSummary } from '@/components/envelopes/SavingsByWalletSummary'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ScrollAnchor } from '@/components/ui/ScrollAnchor'
+import { buildSavingsByWallet } from '@/lib/savingsByWallet'
 import type { Envelope } from '@/types'
 
 function currentMonth() {
@@ -26,9 +29,15 @@ export function EnvelopesPage() {
   const { data: monthSpending } = useEnvelopeSpending(user?.id, month)
   const { data: allSpending } = useEnvelopeSpending(user?.id)
   const { data: currencies } = useCurrencies()
+  const { data: wallets } = useWallets(user?.id)
   const createEnvelope = useCreateEnvelope()
   const updateEnvelope = useUpdateEnvelope()
   const deactivateEnvelope = useDeactivateEnvelope()
+
+  function walletNameOf(walletId: string | null | undefined) {
+    if (!walletId) return null
+    return wallets?.find((w) => w.id === walletId)?.name ?? null
+  }
 
   function statsFor(envelope: Envelope): EnvelopeStats | undefined {
     const symbolOf = (currencyId: string | undefined) =>
@@ -42,11 +51,13 @@ export function EnvelopesPage() {
       const monthAllocated = (monthAllocations ?? [])
         .filter((a) => a.envelopeId === envelope.id)
         .reduce((sum, a) => sum + a.amount, 0)
+      const walletId = allocs.find((a) => a.walletId)?.walletId ?? null
       return {
         kind: 'savings',
         accumulated: allocated - spent,
         monthAllocated,
         symbol: symbolOf(allocs[0]?.currencyId),
+        walletName: walletNameOf(walletId),
       }
     }
 
@@ -56,6 +67,18 @@ export function EnvelopesPage() {
     const spent = monthSpending?.find((s) => s.envelopeId === envelope.id)?.spent ?? 0
     return { kind: 'monthly', available: budget - spent, budget, symbol: symbolOf(allocs[0]?.currencyId) }
   }
+
+  const savingsWalletRows = buildSavingsByWallet(
+    (envelopes ?? [])
+      .filter((e) => e.isSavings)
+      .map((e) => {
+        const stats = statsFor(e)
+        const allocs = (allAllocations ?? []).filter((a) => a.envelopeId === e.id)
+        const walletId = allocs.find((a) => a.walletId)?.walletId ?? null
+        return { envelopeId: e.id, walletId, accumulated: stats?.kind === 'savings' ? stats.accumulated : 0 }
+      }),
+    (wallets ?? []).map((w) => ({ id: w.id, name: w.name, currencyId: w.currencyId, balance: w.balance })),
+  )
 
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Envelope | null>(null)
@@ -145,6 +168,8 @@ export function EnvelopesPage() {
           </Button>
         </div>
       )}
+
+      {currencies && <SavingsByWalletSummary rows={savingsWalletRows} currencies={currencies} />}
 
       <div className="flex flex-col gap-2">
         {groups.map((group) => {

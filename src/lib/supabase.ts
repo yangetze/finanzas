@@ -616,7 +616,7 @@ export async function getEnvelopeAllocations(userId: string, yearMonth?: string)
 export async function upsertEnvelopeAllocations(
   userId: string,
   yearMonth: string,
-  allocations: { envelopeId: string; currencyId: string; amount: number }[],
+  allocations: { envelopeId: string; currencyId: string; amount: number; walletId?: string | null }[],
 ) {
   if (allocations.length === 0) return
   const rows = allocations.map((a) => ({
@@ -625,6 +625,7 @@ export async function upsertEnvelopeAllocations(
     year_month: yearMonth,
     currency_id: a.currencyId,
     amount: a.amount,
+    wallet_id: a.walletId ?? null,
   }))
   const { error } = await supabase
     .from('envelope_allocations')

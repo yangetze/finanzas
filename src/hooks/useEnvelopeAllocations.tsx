@@ -6,6 +6,7 @@ export interface EnvelopeAllocation {
   yearMonth: string
   currencyId: string
   amount: number
+  walletId: string | null
 }
 
 function mapAllocation(row: Record<string, unknown>): EnvelopeAllocation {
@@ -14,6 +15,7 @@ function mapAllocation(row: Record<string, unknown>): EnvelopeAllocation {
     yearMonth: row.year_month as string,
     currencyId: row.currency_id as string,
     amount: row.amount as number,
+    walletId: (row.wallet_id as string | null) ?? null,
   }
 }
 
@@ -39,7 +41,7 @@ export function useUpsertEnvelopeAllocations() {
     }: {
       userId: string
       yearMonth: string
-      allocations: { envelopeId: string; currencyId: string; amount: number }[]
+      allocations: { envelopeId: string; currencyId: string; amount: number; walletId?: string | null }[]
     }) => upsertEnvelopeAllocations(userId, yearMonth, allocations),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['envelope-allocations'] }),
   })
