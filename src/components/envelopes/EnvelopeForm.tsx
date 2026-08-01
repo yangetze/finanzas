@@ -10,6 +10,7 @@ interface EnvelopeFormValues {
   isSavings: boolean
   targetAmount: number | null
   isEmergencyFund: boolean
+  countsAsInvestment: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -21,6 +22,7 @@ interface EnvelopeFormInitial {
   isSavings?: boolean
   targetAmount?: number | null
   isEmergencyFund?: boolean
+  countsAsInvestment?: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -51,6 +53,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
     initialValues?.targetAmount != null ? String(initialValues.targetAmount) : '',
   )
   const [isEmergencyFund, setIsEmergencyFund] = useState(initialValues?.isEmergencyFund ?? false)
+  const [countsAsInvestment, setCountsAsInvestment] = useState(initialValues?.countsAsInvestment ?? false)
   const [parentId, setParentId] = useState(initialValues?.parentId ?? NO_PARENT)
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
@@ -76,6 +79,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
       isSavings,
       targetAmount: targetAmount.trim() === '' ? null : Number(targetAmount),
       isEmergencyFund,
+      countsAsInvestment,
       parentId: parentId === NO_PARENT ? null : parentId,
       emoji: emoji.trim() || null,
       notes: notes.trim() || null,
@@ -149,6 +153,16 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
               className="w-4 h-4 rounded border-border bg-canvas-soft accent-gold"
             />
             <span className="text-sm font-ui text-ink">Cuenta para el Fondo de Emergencia (Paso 1)</span>
+          </label>
+
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={countsAsInvestment}
+              onChange={(e) => setCountsAsInvestment(e.target.checked)}
+              className="w-4 h-4 rounded border-border bg-canvas-soft accent-gold"
+            />
+            <span className="text-sm font-ui text-ink">Cuenta para inversión (Paso 4)</span>
           </label>
         </>
       )}

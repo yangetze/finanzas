@@ -173,6 +173,7 @@ export async function createEnvelope(data: {
   isSavings?: boolean
   targetAmount?: number | null
   isEmergencyFund?: boolean
+  countsAsInvestment?: boolean
   parentId?: string | null
   emoji?: string | null
   notes?: string | null
@@ -185,6 +186,7 @@ export async function createEnvelope(data: {
     is_savings: data.isSavings ?? false,
     target_amount: data.targetAmount ?? null,
     is_emergency_fund: data.isEmergencyFund ?? false,
+    counts_as_investment: data.countsAsInvestment ?? false,
     parent_id: data.parentId ?? null,
     emoji: data.emoji ?? null,
     notes: data.notes ?? null,
@@ -201,6 +203,7 @@ export async function updateEnvelope(
     isSavings: boolean
     targetAmount: number | null
     isEmergencyFund: boolean
+    countsAsInvestment: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null
@@ -213,6 +216,7 @@ export async function updateEnvelope(
   if (data.isSavings !== undefined) updates.is_savings = data.isSavings
   if (data.targetAmount !== undefined) updates.target_amount = data.targetAmount
   if (data.isEmergencyFund !== undefined) updates.is_emergency_fund = data.isEmergencyFund
+  if (data.countsAsInvestment !== undefined) updates.counts_as_investment = data.countsAsInvestment
   if (data.parentId !== undefined) updates.parent_id = data.parentId
   if (data.emoji !== undefined) updates.emoji = data.emoji
   if (data.notes !== undefined) updates.notes = data.notes

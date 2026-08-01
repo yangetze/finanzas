@@ -6,13 +6,20 @@ import { useEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
 import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
 import { useExchangeRates } from '@/hooks/useExchangeRates'
 import { useBudgetItems } from '@/hooks/useBudgetItems'
+import { useTransactions } from '@/hooks/useTransactions'
 import { DebtStepCard } from '@/components/babysteps/DebtStepCard'
 import { EmergencyFundStepCard } from '@/components/babysteps/EmergencyFundStepCard'
 import { FullEmergencyFundStepCard } from '@/components/babysteps/FullEmergencyFundStepCard'
+import { InvestmentStepCard } from '@/components/babysteps/InvestmentStepCard'
 import { Spinner } from '@/components/ui/Spinner'
 import { totalDebtByCurrency } from '@/lib/debtTotals'
 import { consolidateEmergencyFund, isDollarEquivalent } from '@/lib/emergencyFund'
 import { totalMonthlyExpensesByCurrency, consolidateMonthlyExpenses } from '@/lib/monthlyExpenses'
+import {
+  totalMonthlyInvestmentByCurrency,
+  averageMonthlyIncomeByCurrency,
+  consolidateToDollarGroup,
+} from '@/lib/investing'
 import { updateUserProfile } from '@/lib/supabase'
 
 export function BabyStepsPage() {
@@ -24,8 +31,10 @@ export function BabyStepsPage() {
   const { data: spending } = useEnvelopeSpending(user?.id)
   const { data: rates } = useExchangeRates()
   const { data: budgetItems, isLoading: budgetItemsLoading } = useBudgetItems(user?.id)
+  const { data: transactions, isLoading: transactionsLoading } = useTransactions(user?.id)
 
-  const isLoading = walletsLoading || currenciesLoading || envelopesLoading || budgetItemsLoading
+  const isLoading =
+    walletsLoading || currenciesLoading || envelopesLoading || budgetItemsLoading || transactionsLoading
 
   if (isLoading) {
     return (
@@ -55,6 +64,18 @@ export function BabyStepsPage() {
   const expenseTotals = totalMonthlyExpensesByCurrency(budgetItems ?? [], envelopes ?? [])
   const expensesResult = consolidateMonthlyExpenses(expenseTotals, dollarGroupIds, rates ?? [])
 
+  const investmentEnvelopeIds = new Set(
+    (envelopes ?? []).filter((e) => e.isSavings && e.countsAsInvestment).map((e) => e.id),
+  )
+  const investmentTotals = totalMonthlyInvestmentByCurrency(budgetItems ?? [], investmentEnvelopeIds)
+  const investmentResult = consolidateToDollarGroup(investmentTotals, dollarGroupIds, rates ?? [])
+
+  const incomeEntries = (transactions ?? [])
+    .filter((t) => t.type === 'income' && t.status === 'pagado')
+    .map((t) => ({ yearMonth: t.date.slice(0, 7), currencyId: t.paymentCurrencyId, amount: t.paymentAmount }))
+  const incomeTotals = averageMonthlyIncomeByCurrency(incomeEntries)
+  const incomeResult = consolidateToDollarGroup(incomeTotals, dollarGroupIds, rates ?? [])
+
   async function handleSaveTarget(amount: number) {
     if (!user) return
     await updateUserProfile(user.id, { emergencyFundTarget: amount })
@@ -70,8 +91,14 @@ export function BabyStepsPage() {
         currencies={currencies ?? []}
         onSaveTarget={handleSaveTarget}
       />
-      <FullEmergencyFundStepCard fund={fundResult} expenses={expensesResult} currencies={currencies ?? []} />
       <DebtStepCard totals={debtTotals} currencies={currencies ?? []} />
+      <FullEmergencyFundStepCard fund={fundResult} expenses={expensesResult} currencies={currencies ?? []} />
+      <InvestmentStepCard
+        income={incomeResult}
+        investment={investmentResult}
+        hasIncomeHistory={incomeEntries.length > 0}
+        currencies={currencies ?? []}
+      />
     </div>
   )
 }

@@ -20,7 +20,7 @@ const ENVELOPE: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Netflix',
-  spendCategory: null, isSavings: false, targetAmount: null, isEmergencyFund: false,
+  spendCategory: null, isSavings: false, targetAmount: null, isEmergencyFund: false, countsAsInvestment: false,
   emoji: '📱',
   isActive: true,
   sortOrder: 1,

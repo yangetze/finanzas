@@ -61,6 +61,7 @@ export interface Envelope {
   isSavings: boolean
   targetAmount: number | null
   isEmergencyFund: boolean
+  countsAsInvestment: boolean
   emoji: string | null
   isActive: boolean
   sortOrder: number
