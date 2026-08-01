@@ -110,6 +110,7 @@ export function EnvelopesPage() {
     isSavings: boolean
     targetAmount: number | null
     isEmergencyFund: boolean
+    countsAsInvestment: boolean
     parentId: string | null
     emoji: string | null
     notes: string | null

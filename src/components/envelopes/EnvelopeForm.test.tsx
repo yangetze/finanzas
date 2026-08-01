@@ -7,7 +7,7 @@ import type { Envelope } from '@/types'
 const ENVELOPES: Envelope[] = [
   {
     id: 'e1', userId: 'u1', parentId: null, name: 'Hogar',
-    spendCategory: 'supervivencia', isSavings: false, targetAmount: null, isEmergencyFund: false, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
+    spendCategory: 'supervivencia', isSavings: false, targetAmount: null, isEmergencyFund: false, countsAsInvestment: false, emoji: '🏠', isActive: true, sortOrder: 1, notes: null,
     createdAt: '2026-01-01', updatedAt: '2026-01-01',
   },
 ]
@@ -154,5 +154,43 @@ describe('EnvelopeForm', () => {
     }
     render(<EnvelopeForm envelopes={ENVELOPES} initialValues={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />)
     expect((screen.getByLabelText(/fondo de emergencia/i) as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('does not show the investment checkbox until "Sobre de ahorro" is checked', () => {
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.queryByLabelText(/cuenta para inversión/i)).not.toBeInTheDocument()
+  })
+
+  it('submits countsAsInvestment true when the checkbox is checked', async () => {
+    const onSubmit = vi.fn()
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'RetoBitcoin365')
+    await userEvent.click(screen.getByLabelText(/sobre de ahorro/i))
+    await userEvent.click(screen.getByLabelText(/cuenta para inversión/i))
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ countsAsInvestment: true }))
+  })
+
+  it('submits countsAsInvestment false by default', async () => {
+    const onSubmit = vi.fn()
+    render(<EnvelopeForm envelopes={ENVELOPES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/nombre/i), 'Viaje')
+    await userEvent.click(screen.getByLabelText(/sobre de ahorro/i))
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ countsAsInvestment: false }))
+  })
+
+  it('pre-fills the investment checkbox when editing', () => {
+    const initial = {
+      name: 'RetoBitcoin365',
+      spendCategory: null,
+      isSavings: true,
+      countsAsInvestment: true,
+      parentId: null,
+      emoji: null,
+      notes: null,
+    }
+    render(<EnvelopeForm envelopes={ENVELOPES} initialValues={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect((screen.getByLabelText(/cuenta para inversión/i) as HTMLInputElement).checked).toBe(true)
   })
 })

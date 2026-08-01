@@ -1,4 +1,5 @@
-import { PartyPopper, Target } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, PartyPopper, Target } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import type { CurrencyTotal } from '@/lib/budgetTotals'
 
@@ -24,7 +25,7 @@ export function DebtStepCard({ totals, currencies }: DebtStepCardProps) {
       {isDebtFree ? (
         <div className="flex items-center gap-2 text-sm font-ui text-sage">
           <PartyPopper size={16} />
-          Sin deudas activas (TDC y Cashea en $0)
+          Sin deudas activas
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -32,13 +33,21 @@ export function DebtStepCard({ totals, currencies }: DebtStepCardProps) {
             const symbol = currencies.find((c) => c.id === t.currencyId)?.symbol ?? ''
             return (
               <div key={t.currencyId} className="flex items-center justify-between text-sm font-ui">
-                <span className="text-ink-faint">Deuda total (TDC + Cashea)</span>
+                <span className="text-ink-faint">Deuda total</span>
                 <span className="font-mono font-semibold text-coral">{fmt(t.total, symbol)}</span>
               </div>
             )
           })}
         </div>
       )}
+
+      <Link
+        to="/deudas"
+        className="flex items-center gap-1 text-xs font-ui text-gold hover:text-gold/80 self-start"
+      >
+        Ver detalle en Deudas
+        <ArrowRight size={12} />
+      </Link>
     </Card>
   )
 }
