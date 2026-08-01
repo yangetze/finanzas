@@ -9,6 +9,7 @@ interface EnvelopeFormValues {
   spendCategory: SpendingType | null
   isSavings: boolean
   targetAmount: number | null
+  isEmergencyFund: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -19,6 +20,7 @@ interface EnvelopeFormInitial {
   spendCategory?: SpendingType | null
   isSavings?: boolean
   targetAmount?: number | null
+  isEmergencyFund?: boolean
   parentId: string | null
   emoji: string | null
   notes: string | null
@@ -48,6 +50,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
   const [targetAmount, setTargetAmount] = useState(
     initialValues?.targetAmount != null ? String(initialValues.targetAmount) : '',
   )
+  const [isEmergencyFund, setIsEmergencyFund] = useState(initialValues?.isEmergencyFund ?? false)
   const [parentId, setParentId] = useState(initialValues?.parentId ?? NO_PARENT)
   const [emoji, setEmoji] = useState(initialValues?.emoji ?? '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
@@ -72,6 +75,7 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
       spendCategory,
       isSavings,
       targetAmount: targetAmount.trim() === '' ? null : Number(targetAmount),
+      isEmergencyFund,
       parentId: parentId === NO_PARENT ? null : parentId,
       emoji: emoji.trim() || null,
       notes: notes.trim() || null,
@@ -127,14 +131,26 @@ export function EnvelopeForm({ envelopes, initialValues, onSubmit, onCancel, loa
       </label>
 
       {isSavings && (
-        <Input
-          label="Meta de ahorro"
-          type="number"
-          step="0.01"
-          value={targetAmount}
-          onChange={(e) => setTargetAmount(e.target.value)}
-          placeholder="Opcional — ej. 1000"
-        />
+        <>
+          <Input
+            label="Meta de ahorro"
+            type="number"
+            step="0.01"
+            value={targetAmount}
+            onChange={(e) => setTargetAmount(e.target.value)}
+            placeholder="Opcional — ej. 1000"
+          />
+
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isEmergencyFund}
+              onChange={(e) => setIsEmergencyFund(e.target.checked)}
+              className="w-4 h-4 rounded border-border bg-canvas-soft accent-gold"
+            />
+            <span className="text-sm font-ui text-ink">Cuenta para el Fondo de Emergencia (Paso 1)</span>
+          </label>
+        </>
       )}
 
       <Input

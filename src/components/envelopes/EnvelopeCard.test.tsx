@@ -9,7 +9,7 @@ const GROUP: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Hogar',
-  spendCategory: 'supervivencia', isSavings: false, targetAmount: null,
+  spendCategory: 'supervivencia', isSavings: false, targetAmount: null, isEmergencyFund: false,
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,

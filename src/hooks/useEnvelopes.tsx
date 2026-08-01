@@ -11,6 +11,7 @@ function mapEnvelope(row: Record<string, unknown>): Envelope {
     spendCategory: (row.spend_category as Envelope['spendCategory']) ?? null,
     isSavings: (row.is_savings as boolean) ?? false,
     targetAmount: (row.target_amount as number | null) ?? null,
+    isEmergencyFund: (row.is_emergency_fund as boolean) ?? false,
     emoji: row.emoji as string | null,
     isActive: row.is_active as boolean,
     sortOrder: row.sort_order as number,
