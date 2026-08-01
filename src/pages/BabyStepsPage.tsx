@@ -10,11 +10,10 @@ import { EmergencyFundStepCard } from '@/components/babysteps/EmergencyFundStepC
 import { Spinner } from '@/components/ui/Spinner'
 import { totalDebtByCurrency } from '@/lib/debtTotals'
 import { consolidateEmergencyFund, isDollarEquivalent } from '@/lib/emergencyFund'
-
-const EMERGENCY_FUND_TARGET = 1000
+import { updateUserProfile } from '@/lib/supabase'
 
 export function BabyStepsPage() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { data: wallets, isLoading: walletsLoading } = useWallets(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
   const { data: envelopes, isLoading: envelopesLoading } = useEnvelopes(user?.id)
@@ -49,10 +48,21 @@ export function BabyStepsPage() {
   const dollarGroupIds = new Set((currencies ?? []).filter(isDollarEquivalent).map((c) => c.id))
   const fundResult = consolidateEmergencyFund(fundEntries, dollarGroupIds, rates ?? [])
 
+  async function handleSaveTarget(amount: number) {
+    if (!user) return
+    await updateUserProfile(user.id, { emergencyFundTarget: amount })
+    await refreshUser()
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-ui font-semibold text-ink">Metas</h1>
-      <EmergencyFundStepCard result={fundResult} target={EMERGENCY_FUND_TARGET} currencies={currencies ?? []} />
+      <EmergencyFundStepCard
+        result={fundResult}
+        target={user?.emergencyFundTarget ?? 1000}
+        currencies={currencies ?? []}
+        onSaveTarget={handleSaveTarget}
+      />
       <DebtStepCard totals={debtTotals} currencies={currencies ?? []} />
     </div>
   )
