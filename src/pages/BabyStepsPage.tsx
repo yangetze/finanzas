@@ -5,11 +5,14 @@ import { useEnvelopes } from '@/hooks/useEnvelopes'
 import { useEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
 import { useEnvelopeSpending } from '@/hooks/useEnvelopeSpending'
 import { useExchangeRates } from '@/hooks/useExchangeRates'
+import { useBudgetItems } from '@/hooks/useBudgetItems'
 import { DebtStepCard } from '@/components/babysteps/DebtStepCard'
 import { EmergencyFundStepCard } from '@/components/babysteps/EmergencyFundStepCard'
+import { FullEmergencyFundStepCard } from '@/components/babysteps/FullEmergencyFundStepCard'
 import { Spinner } from '@/components/ui/Spinner'
 import { totalDebtByCurrency } from '@/lib/debtTotals'
 import { consolidateEmergencyFund, isDollarEquivalent } from '@/lib/emergencyFund'
+import { totalMonthlyExpensesByCurrency, consolidateMonthlyExpenses } from '@/lib/monthlyExpenses'
 import { updateUserProfile } from '@/lib/supabase'
 
 export function BabyStepsPage() {
@@ -20,8 +23,9 @@ export function BabyStepsPage() {
   const { data: allocations } = useEnvelopeAllocations(user?.id)
   const { data: spending } = useEnvelopeSpending(user?.id)
   const { data: rates } = useExchangeRates()
+  const { data: budgetItems, isLoading: budgetItemsLoading } = useBudgetItems(user?.id)
 
-  const isLoading = walletsLoading || currenciesLoading || envelopesLoading
+  const isLoading = walletsLoading || currenciesLoading || envelopesLoading || budgetItemsLoading
 
   if (isLoading) {
     return (
@@ -48,6 +52,9 @@ export function BabyStepsPage() {
   const dollarGroupIds = new Set((currencies ?? []).filter(isDollarEquivalent).map((c) => c.id))
   const fundResult = consolidateEmergencyFund(fundEntries, dollarGroupIds, rates ?? [])
 
+  const expenseTotals = totalMonthlyExpensesByCurrency(budgetItems ?? [], envelopes ?? [])
+  const expensesResult = consolidateMonthlyExpenses(expenseTotals, dollarGroupIds, rates ?? [])
+
   async function handleSaveTarget(amount: number) {
     if (!user) return
     await updateUserProfile(user.id, { emergencyFundTarget: amount })
@@ -63,6 +70,7 @@ export function BabyStepsPage() {
         currencies={currencies ?? []}
         onSaveTarget={handleSaveTarget}
       />
+      <FullEmergencyFundStepCard fund={fundResult} expenses={expensesResult} currencies={currencies ?? []} />
       <DebtStepCard totals={debtTotals} currencies={currencies ?? []} />
     </div>
   )
