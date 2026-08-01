@@ -35,7 +35,7 @@ const ENVELOPE: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Suscripciones',
-  spendCategory: null, isSavings: false,
+  spendCategory: null, isSavings: false, targetAmount: null,
   emoji: null,
   isActive: true,
   sortOrder: 1,

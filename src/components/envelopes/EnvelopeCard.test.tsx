@@ -9,7 +9,7 @@ const GROUP: Envelope = {
   userId: 'u1',
   parentId: null,
   name: 'Hogar',
-  spendCategory: 'supervivencia', isSavings: false,
+  spendCategory: 'supervivencia', isSavings: false, targetAmount: null,
   emoji: '🏠',
   isActive: true,
   sortOrder: 1,
@@ -110,6 +110,33 @@ describe('EnvelopeCard — budget stats', () => {
     expect(screen.getByText(/acumulado/i)).toBeInTheDocument()
     expect(screen.getByText(/\$ 1\.250,00/)).toBeInTheDocument()
     expect(screen.getByText(/\+\$ 100,00 este mes/)).toBeInTheDocument()
+  })
+
+  it('shows accumulated against the goal when a target is set', () => {
+    render(
+      <EnvelopeCard
+        envelope={{ ...SUB, isSavings: true }}
+        subCount={0}
+        stats={{ kind: 'savings', accumulated: 340, monthAllocated: 0, symbol: '$', target: 1000 }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/\$ 340,00 de \$ 1\.000,00/)).toBeInTheDocument()
+  })
+
+  it('shows only the accumulated total when there is no goal', () => {
+    render(
+      <EnvelopeCard
+        envelope={{ ...SUB, isSavings: true }}
+        subCount={0}
+        stats={{ kind: 'savings', accumulated: 340, monthAllocated: 0, symbol: '$', target: null }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/\$ 340,00/)).toBeInTheDocument()
+    expect(screen.queryByText(/ de \$/)).not.toBeInTheDocument()
   })
 
   it('shows the wallet holding the savings when known', () => {

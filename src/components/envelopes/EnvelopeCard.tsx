@@ -19,7 +19,14 @@ const SPEND_COLORS: Record<SpendingType, string> = {
 
 export type EnvelopeStats =
   | { kind: 'monthly'; available: number; budget: number; symbol: string }
-  | { kind: 'savings'; accumulated: number; monthAllocated: number; symbol: string; walletName?: string | null }
+  | {
+      kind: 'savings'
+      accumulated: number
+      monthAllocated: number
+      symbol: string
+      walletName?: string | null
+      target?: number | null
+    }
 
 interface EnvelopeCardProps {
   envelope: Envelope
@@ -103,7 +110,13 @@ export function EnvelopeCard({ envelope, subCount, isExpanded, onToggle, stats, 
             </span>
             <span className="flex items-center gap-2">
               <span className="text-xs font-mono font-semibold text-gold">
-                {fmt(stats.accumulated, stats.symbol)}
+                {stats.target ? (
+                  <>
+                    {fmt(stats.accumulated, stats.symbol)} de {fmt(stats.target, stats.symbol)}
+                  </>
+                ) : (
+                  fmt(stats.accumulated, stats.symbol)
+                )}
               </span>
               {stats.monthAllocated > 0 && (
                 <span className="text-xs font-mono text-sage">
@@ -112,6 +125,7 @@ export function EnvelopeCard({ envelope, subCount, isExpanded, onToggle, stats, 
               )}
             </span>
           </div>
+          {stats.target && <ProgressBar value={stats.accumulated} max={stats.target} className="mx-0" />}
           {stats.walletName && (
             <span className="flex items-center gap-1.5 text-xs font-ui text-ink-faint">
               <Wallet size={12} />
