@@ -19,6 +19,7 @@ export interface EnvelopeAllocationInput {
   envelopeId: string
   currencyId: string
   amount: number
+  walletId: string | null
 }
 
 export interface StampedTransaction {
@@ -121,6 +122,9 @@ export function buildStampedTransactions(
 // The month's budget per envelope from allocation-type items: each
 // applicable item contributes amount × occurrences (weekly ×4-5,
 // biweekly ×1-2, others ×1), summed per envelope and currency.
+// walletId tags which wallet holds that money (for savings envelopes, so
+// "¿dónde está guardado?" is answerable) — when multiple items feed the
+// same envelope+currency, the first item's wallet wins.
 export function buildAllocations(
   items: BudgetItemStampInput[],
   yearMonth: string,
@@ -137,7 +141,13 @@ export function buildAllocations(
     const key = `${item.envelopeId}|${item.currencyId}`
     const existing = totals.get(key)
     if (existing) existing.amount += item.baseAmount * occurrences
-    else totals.set(key, { envelopeId: item.envelopeId, currencyId: item.currencyId, amount: item.baseAmount * occurrences })
+    else
+      totals.set(key, {
+        envelopeId: item.envelopeId,
+        currencyId: item.currencyId,
+        amount: item.baseAmount * occurrences,
+        walletId: item.walletId,
+      })
   }
   return [...totals.values()]
 }

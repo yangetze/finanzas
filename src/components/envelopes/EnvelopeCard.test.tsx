@@ -112,6 +112,32 @@ describe('EnvelopeCard — budget stats', () => {
     expect(screen.getByText(/\+\$ 100,00 este mes/)).toBeInTheDocument()
   })
 
+  it('shows the wallet holding the savings when known', () => {
+    render(
+      <EnvelopeCard
+        envelope={{ ...SUB, isSavings: true }}
+        subCount={0}
+        stats={{ kind: 'savings', accumulated: 1250, monthAllocated: 100, symbol: '$', walletName: 'Bitget Earn USDt' }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.getByText('Bitget Earn USDt')).toBeInTheDocument()
+  })
+
+  it('does not render a wallet label when the wallet is unknown', () => {
+    render(
+      <EnvelopeCard
+        envelope={{ ...SUB, isSavings: true }}
+        subCount={0}
+        stats={{ kind: 'savings', accumulated: 1250, monthAllocated: 100, symbol: '$', walletName: null }}
+        onEdit={vi.fn()}
+        onDeactivate={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/billetera/i)).not.toBeInTheDocument()
+  })
+
   it('renders no stats block when stats are absent', () => {
     render(<EnvelopeCard envelope={SUB} subCount={0} onEdit={vi.fn()} onDeactivate={vi.fn()} />)
     expect(screen.queryByText(/disponible/i)).not.toBeInTheDocument()
