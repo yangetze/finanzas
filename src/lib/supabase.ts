@@ -905,6 +905,20 @@ export async function getPersonalDebtPayments(personalDebtId: string) {
   return data
 }
 
+// All of a user's personal debt payments across every debt, for computing
+// net-by-debtor totals and outstanding balances at the page level without
+// one query per debt.
+export async function getPersonalDebtPaymentsForUser(userId: string) {
+  const { data, error } = await supabase
+    .from('personal_debt_payments')
+    .select('*')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
 // Recomputes and persists a personal_debt's status from the sum of its
 // payments (payment + offset rows alike), instead of trusting a value the
 // caller might have derived from a stale local snapshot.

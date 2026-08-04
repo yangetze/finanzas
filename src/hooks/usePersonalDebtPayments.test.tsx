@@ -5,12 +5,14 @@ import type { ReactNode } from 'react'
 
 const {
   mockGetPersonalDebtPayments,
+  mockGetPersonalDebtPaymentsForUser,
   mockAddPersonalDebtPayment,
   mockDeletePersonalDebtPayment,
   mockCreatePersonalDebtOffset,
   mockDeletePersonalDebtOffset,
 } = vi.hoisted(() => ({
   mockGetPersonalDebtPayments: vi.fn(),
+  mockGetPersonalDebtPaymentsForUser: vi.fn(),
   mockAddPersonalDebtPayment: vi.fn(),
   mockDeletePersonalDebtPayment: vi.fn(),
   mockCreatePersonalDebtOffset: vi.fn(),
@@ -19,6 +21,7 @@ const {
 
 vi.mock('@/lib/supabase', () => ({
   getPersonalDebtPayments: mockGetPersonalDebtPayments,
+  getPersonalDebtPaymentsForUser: mockGetPersonalDebtPaymentsForUser,
   addPersonalDebtPayment: mockAddPersonalDebtPayment,
   deletePersonalDebtPayment: mockDeletePersonalDebtPayment,
   createPersonalDebtOffset: mockCreatePersonalDebtOffset,
@@ -27,6 +30,7 @@ vi.mock('@/lib/supabase', () => ({
 
 import {
   usePersonalDebtPayments,
+  usePersonalDebtPaymentsForUser,
   useAddPersonalDebtPayment,
   useDeletePersonalDebtPayment,
   useCreatePersonalDebtOffset,
@@ -82,6 +86,22 @@ describe('usePersonalDebtPayments', () => {
 
   it('is disabled without a personalDebtId', () => {
     const { result } = renderHook(() => usePersonalDebtPayments(undefined), { wrapper })
+    expect(result.current.fetchStatus).toBe('idle')
+  })
+})
+
+describe('usePersonalDebtPaymentsForUser', () => {
+  it('returns all of a user payments after fetch', async () => {
+    mockGetPersonalDebtPaymentsForUser.mockResolvedValue([MOCK_PAYMENT_ROW])
+
+    const { result } = renderHook(() => usePersonalDebtPaymentsForUser('u1'), { wrapper })
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual([MOCK_PAYMENT])
+  })
+
+  it('is disabled without a userId', () => {
+    const { result } = renderHook(() => usePersonalDebtPaymentsForUser(undefined), { wrapper })
     expect(result.current.fetchStatus).toBe('idle')
   })
 })

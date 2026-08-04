@@ -1,0 +1,79 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { PersonalDebtForm } from './PersonalDebtForm'
+import type { Currency } from '@/types'
+
+const CURRENCIES: Currency[] = [
+  { id: 'c1', code: 'USD', name: 'US Dollar', symbol: '$', type: 'fiat', isActive: true, sortOrder: 1, createdAt: '2026-01-01' },
+]
+
+describe('PersonalDebtForm', () => {
+  it('renders direction, description, currency and amount fields', () => {
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    expect(screen.getByLabelText(/dirección/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/descripción/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/moneda/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/monto/i)).toBeInTheDocument()
+  })
+
+  it('shows validation error when description is empty', async () => {
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/monto/i), '5')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(screen.getByText(/descripción es requerida/i)).toBeInTheDocument()
+  })
+
+  it('shows validation error when amount is zero', async () => {
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={vi.fn()} onCancel={vi.fn()} />)
+    await userEvent.type(screen.getByLabelText(/descripción/i), 'Cena')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(screen.getByText(/monto debe ser mayor a cero/i)).toBeInTheDocument()
+  })
+
+  it('calls onSubmit with form data when valid', async () => {
+    const onSubmit = vi.fn()
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+
+    await userEvent.selectOptions(screen.getByLabelText(/dirección/i), 'i_owe_them')
+    await userEvent.type(screen.getByLabelText(/descripción/i), 'Cena del viernes')
+    await userEvent.type(screen.getByLabelText(/monto/i), '5')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        direction: 'i_owe_them',
+        description: 'Cena del viernes',
+        currencyId: 'c1',
+        originalAmount: 5,
+      }),
+    )
+  })
+
+  it('calls onCancel when cancel button is clicked', async () => {
+    const onCancel = vi.fn()
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={vi.fn()} onCancel={onCancel} />)
+    await userEvent.click(screen.getByRole('button', { name: /cancelar/i }))
+    expect(onCancel).toHaveBeenCalled()
+  })
+
+  it('pre-fills fields when editing an existing debt', () => {
+    render(
+      <PersonalDebtForm
+        currencies={CURRENCIES}
+        initialValues={{
+          direction: 'they_owe_me',
+          description: 'Uber',
+          currencyId: 'c1',
+          originalAmount: 4,
+          date: '2026-08-01',
+          notes: null,
+        }}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+    expect((screen.getByLabelText(/descripción/i) as HTMLInputElement).value).toBe('Uber')
+    expect((screen.getByLabelText(/monto/i) as HTMLInputElement).value).toBe('4')
+  })
+})

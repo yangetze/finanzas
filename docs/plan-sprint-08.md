@@ -90,18 +90,25 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
       `personalDebts` y `wallets` (los balances cambian junto con el status)
 
 ### 6. UI
-- [ ] `components/personal-debts/DebtorCard.tsx` (+ test) — muestra neto por
-      moneda, expande a sus `personal_debts`
-- [ ] `components/personal-debts/PersonalDebtRow.tsx` (+ test) — saldo,
+- [x] `components/personal-debts/DebtorCard.tsx` (+ test) — muestra neto por
+      moneda (`Me debe`/`Le debo`), expande a sus `personal_debts`, botón
+      "Compensar" visible solo cuando hay deudas cruzadas sin pagar
+- [x] `components/personal-debts/PersonalDebtRow.tsx` (+ test) — saldo,
       status badge, historial de pagos (distingue `payment` vs `offset`)
-- [ ] `components/personal-debts/DebtorForm.tsx` (+ test)
-- [ ] `components/personal-debts/PersonalDebtForm.tsx` (+ test)
-- [ ] `components/personal-debts/PersonalDebtPaymentForm.tsx` (+ test)
-- [ ] `components/personal-debts/PersonalDebtOffsetForm.tsx` (+ test) —
+- [x] `components/personal-debts/DebtorForm.tsx` (+ test)
+- [x] `components/personal-debts/PersonalDebtForm.tsx` (+ test)
+- [x] `components/personal-debts/PersonalDebtPaymentForm.tsx` (+ test)
+- [x] `components/personal-debts/PersonalDebtOffsetForm.tsx` (+ test) —
       selecciona debt A / debt B del mismo deudor y moneda, muestra preview
       del resultado antes de confirmar
-- [ ] Nueva tab "Personas" en `DebtsPage.tsx`, junto a TDC/Cashea
-- [ ] `AppShell.tsx`: sin cambios de nav (vive dentro de /deudas existente)
+- [x] Nueva tab "Personas" en `DebtsPage.tsx`, junto a TDC
+- [x] `AppShell.tsx`: sin cambios de nav (vive dentro de /deudas existente)
+- [x] Verificado manualmente en navegador contra Supabase local (Docker):
+      login, crear deudor "María", crear deuda they_owe_me $4 ("Uber") y
+      i_owe_them $5 ("Cena del viernes"), compensar (preview y resultado
+      exactos al ejemplo guía: $4 compensados, Uber pagada, Cena parcial en
+      $1), registrar pago de $1 contra una wallet y confirmar que la wallet
+      se debitó correctamente ($50 → $49) y la deuda quedó pagada
 
 ## Out of scope (futuro)
 - Recordatorios/notificaciones de deudas vencidas

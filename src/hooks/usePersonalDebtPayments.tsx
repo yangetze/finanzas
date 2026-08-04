@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getPersonalDebtPayments,
+  getPersonalDebtPaymentsForUser,
   addPersonalDebtPayment,
   deletePersonalDebtPayment,
   createPersonalDebtOffset,
@@ -32,6 +33,17 @@ export function usePersonalDebtPayments(personalDebtId: string | undefined) {
       return (rows ?? []).map(mapPersonalDebtPayment)
     },
     enabled: !!personalDebtId,
+  })
+}
+
+export function usePersonalDebtPaymentsForUser(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['personalDebtPayments', 'byUser', userId],
+    queryFn: async () => {
+      const rows = await getPersonalDebtPaymentsForUser(userId!)
+      return (rows ?? []).map(mapPersonalDebtPayment)
+    },
+    enabled: !!userId,
   })
 }
 
