@@ -109,6 +109,12 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
       exactos al ejemplo guía: $4 compensados, Uber pagada, Cena parcial en
       $1), registrar pago de $1 contra una wallet y confirmar que la wallet
       se debitó correctamente ($50 → $49) y la deuda quedó pagada
+- [x] Verificado también el camino de borrado: eliminar la compensación
+      revierte ambas filas del `offset_group_id` y los status vuelven a
+      `open`/`partial` según corresponda (coincide con el ejemplo guía);
+      eliminar el pago directo revierte el crédito/débito de wallet ($49 →
+      $50) y el status de la deuda; "Eliminar deuda" y "Desactivar" deudor
+      (soft delete, `is_active=false`) también confirmados
 
 ## Out of scope (futuro)
 - Recordatorios/notificaciones de deudas vencidas
