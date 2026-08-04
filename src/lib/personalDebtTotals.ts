@@ -8,7 +8,7 @@ export function outstandingAmount(debt: PersonalDebt, payments: PersonalDebtPaym
   return Math.max(0, debt.originalAmount - paid)
 }
 
-function statusForOutstanding(originalAmount: number, outstanding: number): PersonalDebtStatus {
+export function statusForOutstanding(originalAmount: number, outstanding: number): PersonalDebtStatus {
   if (outstanding <= 0) return 'paid'
   if (outstanding >= originalAmount) return 'open'
   return 'partial'

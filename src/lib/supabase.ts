@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import type { UserProfile } from '@/types'
+import type { UserProfile, PersonalDebtDirection } from '@/types'
 import type { StampedTransaction } from '@/lib/stampMonth'
 import { incomeEditBalanceDeltas } from '@/lib/balanceDeltas'
+import { statusForOutstanding } from '@/lib/personalDebtTotals'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -787,4 +788,245 @@ export async function upsertExchangeRate(data: {
     { onConflict: 'from_currency_id,to_currency_id,rate_date' },
   )
   if (error) throw error
+}
+
+export async function getDebtors(userId: string) {
+  const { data, error } = await supabase
+    .from('debtors')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('name')
+
+  if (error) throw error
+  return data
+}
+
+export async function createDebtor(data: { userId: string; name: string; notes?: string | null }) {
+  const { error } = await supabase.from('debtors').insert({
+    user_id: data.userId,
+    name: data.name,
+    notes: data.notes ?? null,
+  })
+  if (error) throw error
+}
+
+export async function updateDebtor(
+  id: string,
+  data: Partial<{ name: string; notes: string | null }>,
+) {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (data.name !== undefined) updates.name = data.name
+  if (data.notes !== undefined) updates.notes = data.notes
+
+  const { error } = await supabase.from('debtors').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deactivateDebtor(id: string) {
+  const { error } = await supabase
+    .from('debtors')
+    .update({ is_active: false, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function getPersonalDebts(userId: string, debtorId?: string) {
+  let query = supabase.from('personal_debts').select('*').eq('user_id', userId).order('date', {
+    ascending: false,
+  })
+  if (debtorId) query = query.eq('debtor_id', debtorId)
+
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export async function createPersonalDebt(data: {
+  userId: string
+  debtorId: string
+  direction: PersonalDebtDirection
+  description: string
+  currencyId: string
+  originalAmount: number
+  date: string
+  notes?: string | null
+}) {
+  const { error } = await supabase.from('personal_debts').insert({
+    user_id: data.userId,
+    debtor_id: data.debtorId,
+    direction: data.direction,
+    description: data.description,
+    currency_id: data.currencyId,
+    original_amount: data.originalAmount,
+    date: data.date,
+    status: 'open',
+    notes: data.notes ?? null,
+  })
+  if (error) throw error
+}
+
+export async function updatePersonalDebt(
+  id: string,
+  data: Partial<{
+    direction: PersonalDebtDirection
+    description: string
+    currencyId: string
+    originalAmount: number
+    date: string
+    notes: string | null
+  }>,
+) {
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (data.direction !== undefined) updates.direction = data.direction
+  if (data.description !== undefined) updates.description = data.description
+  if (data.currencyId !== undefined) updates.currency_id = data.currencyId
+  if (data.originalAmount !== undefined) updates.original_amount = data.originalAmount
+  if (data.date !== undefined) updates.date = data.date
+  if (data.notes !== undefined) updates.notes = data.notes
+
+  const { error } = await supabase.from('personal_debts').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deletePersonalDebt(id: string) {
+  const { error } = await supabase.from('personal_debts').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function getPersonalDebtPayments(personalDebtId: string) {
+  const { data, error } = await supabase
+    .from('personal_debt_payments')
+    .select('*')
+    .eq('personal_debt_id', personalDebtId)
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+// Recomputes and persists a personal_debt's status from the sum of its
+// payments (payment + offset rows alike), instead of trusting a value the
+// caller might have derived from a stale local snapshot.
+async function recalcPersonalDebtStatus(personalDebtId: string, originalAmount: number) {
+  const { data: payments, error } = await supabase
+    .from('personal_debt_payments')
+    .select('amount')
+    .eq('personal_debt_id', personalDebtId)
+  if (error) throw error
+
+  const paid = (payments ?? []).reduce((sum, p) => sum + p.amount, 0)
+  const outstanding = Math.max(0, originalAmount - paid)
+  const status = statusForOutstanding(originalAmount, outstanding)
+
+  const { error: updateError } = await supabase
+    .from('personal_debts')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', personalDebtId)
+  if (updateError) throw updateError
+}
+
+export async function addPersonalDebtPayment(data: {
+  userId: string
+  personalDebtId: string
+  debtDirection: PersonalDebtDirection
+  debtOriginalAmount: number
+  walletId: string
+  amount: number
+  currencyId: string
+  date: string
+  notes?: string | null
+}) {
+  const { error } = await supabase.from('personal_debt_payments').insert({
+    user_id: data.userId,
+    personal_debt_id: data.personalDebtId,
+    wallet_id: data.walletId,
+    amount: data.amount,
+    currency_id: data.currencyId,
+    date: data.date,
+    payment_type: 'payment',
+    offset_group_id: null,
+    notes: data.notes ?? null,
+  })
+  if (error) throw error
+
+  // i_owe_them: paying them hands money out of the wallet. they_owe_me:
+  // receiving their payment credits the wallet.
+  await adjustWalletBalance(data.walletId, data.debtDirection === 'i_owe_them' ? -data.amount : data.amount)
+  await recalcPersonalDebtStatus(data.personalDebtId, data.debtOriginalAmount)
+}
+
+export async function deletePersonalDebtPayment(payment: {
+  id: string
+  personalDebtId: string
+  debtDirection: PersonalDebtDirection
+  debtOriginalAmount: number
+  walletId: string
+  amount: number
+}) {
+  const { error } = await supabase.from('personal_debt_payments').delete().eq('id', payment.id)
+  if (error) throw error
+
+  await adjustWalletBalance(payment.walletId, payment.debtDirection === 'i_owe_them' ? payment.amount : -payment.amount)
+  await recalcPersonalDebtStatus(payment.personalDebtId, payment.debtOriginalAmount)
+}
+
+// Compensates two crossed debts of the same debtor/currency: inserts one
+// offset payment row per debt, sharing offsetGroupId, and recalculates both
+// statuses. No wallet touched — no money actually moved, see
+// docs/plan-sprint-08.md guiding example.
+export async function createPersonalDebtOffset(data: {
+  userId: string
+  debtAId: string
+  debtAOriginalAmount: number
+  debtBId: string
+  debtBOriginalAmount: number
+  amount: number
+  currencyId: string
+  date: string
+}) {
+  const offsetGroupId = crypto.randomUUID()
+  const { error } = await supabase.from('personal_debt_payments').insert([
+    {
+      user_id: data.userId,
+      personal_debt_id: data.debtAId,
+      wallet_id: null,
+      amount: data.amount,
+      currency_id: data.currencyId,
+      date: data.date,
+      payment_type: 'offset',
+      offset_group_id: offsetGroupId,
+      notes: null,
+    },
+    {
+      user_id: data.userId,
+      personal_debt_id: data.debtBId,
+      wallet_id: null,
+      amount: data.amount,
+      currency_id: data.currencyId,
+      date: data.date,
+      payment_type: 'offset',
+      offset_group_id: offsetGroupId,
+      notes: null,
+    },
+  ])
+  if (error) throw error
+
+  await recalcPersonalDebtStatus(data.debtAId, data.debtAOriginalAmount)
+  await recalcPersonalDebtStatus(data.debtBId, data.debtBOriginalAmount)
+}
+
+export async function deletePersonalDebtOffset(
+  offsetGroupId: string,
+  debts: { id: string; originalAmount: number }[],
+) {
+  const { error } = await supabase
+    .from('personal_debt_payments')
+    .delete()
+    .eq('offset_group_id', offsetGroupId)
+  if (error) throw error
+
+  for (const debt of debts) {
+    await recalcPersonalDebtStatus(debt.id, debt.originalAmount)
+  }
 }

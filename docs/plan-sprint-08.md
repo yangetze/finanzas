@@ -64,9 +64,18 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
       resultantes (14/14 tests verdes)
 
 ### 4. Supabase helpers
-- [ ] `lib/supabase.ts`: CRUD de `debtors` y `personal_debts`,
-      `addPersonalDebtPayment`, `createOffset` (inserta las 2 filas con mismo
-      `offset_group_id`, recalcula status), `deleteOffset` (borra ambas filas)
+- [x] `lib/supabase.ts`: CRUD de `debtors` (`getDebtors`, `createDebtor`,
+      `updateDebtor`, `deactivateDebtor`) y `personal_debts` (`getPersonalDebts`,
+      `createPersonalDebt`, `updatePersonalDebt`, `deletePersonalDebt`);
+      `addPersonalDebtPayment`/`deletePersonalDebtPayment` (ajustan wallet
+      según dirección de la deuda y recalculan status);
+      `createPersonalDebtOffset` (inserta las 2 filas con mismo
+      `offset_group_id`, sin tocar wallets, recalcula status de ambas deudas),
+      `deletePersonalDebtOffset` (borra ambas filas por `offset_group_id`,
+      recalcula status de vuelta a `open`/`open` si no quedan otros pagos).
+      Status recalculado siempre desde la suma real de pagos en DB
+      (`statusForOutstanding` de `lib/personalDebtTotals.ts`), no confiando en
+      estado local del cliente.
 
 ### 5. Hooks
 - [ ] `hooks/useDebtors.ts`

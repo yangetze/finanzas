@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { outstandingAmount, netByDebtor, computeOffset } from './personalDebtTotals'
+import { outstandingAmount, netByDebtor, computeOffset, statusForOutstanding } from './personalDebtTotals'
 import type { PersonalDebt, PersonalDebtPayment } from '@/types'
 
 const debt = (overrides: Partial<PersonalDebt> = {}): PersonalDebt => ({
@@ -87,6 +87,24 @@ describe('netByDebtor', () => {
     const debtA = debt({ id: 'debt-a', direction: 'they_owe_me', originalAmount: 4, currencyId: 'usd' })
     const payments = [payment({ personalDebtId: 'debt-a', amount: 4 })]
     expect(netByDebtor([debtA], payments)).toEqual([])
+  })
+})
+
+describe('statusForOutstanding', () => {
+  it('is open when nothing has been paid', () => {
+    expect(statusForOutstanding(5, 5)).toBe('open')
+  })
+
+  it('is partial when some but not all has been paid', () => {
+    expect(statusForOutstanding(5, 2)).toBe('partial')
+  })
+
+  it('is paid when outstanding reaches zero', () => {
+    expect(statusForOutstanding(5, 0)).toBe('paid')
+  })
+
+  it('is paid when outstanding goes negative', () => {
+    expect(statusForOutstanding(5, -1)).toBe('paid')
   })
 })
 
