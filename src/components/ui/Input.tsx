@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import type { InputHTMLAttributes } from 'react'
+import { useRef, type InputHTMLAttributes, type MouseEvent } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -7,8 +7,16 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   helper?: string
 }
 
-export function Input({ label, error, helper, className, id, ...props }: InputProps) {
+export function Input({ label, error, helper, className, id, type, onClick, ...props }: InputProps) {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function handleClick(e: MouseEvent<HTMLInputElement>) {
+    onClick?.(e)
+    if (type === 'date') {
+      inputRef.current?.showPicker?.()
+    }
+  }
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -19,11 +27,15 @@ export function Input({ label, error, helper, className, id, ...props }: InputPr
       )}
       <input
         id={inputId}
+        ref={inputRef}
+        type={type}
+        onClick={handleClick}
         className={cn(
           'w-full bg-canvas-soft border border-border rounded-lg px-3 py-2 text-sm text-ink font-mono',
           'placeholder:text-ink-faint',
           'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60',
           'disabled:opacity-50 disabled:cursor-not-allowed',
+          type === 'date' && 'cursor-pointer [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert-[0.8]',
           error && 'border-coral/60 focus:ring-coral/40',
           className,
         )}
