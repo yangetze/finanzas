@@ -87,6 +87,12 @@ Write the test FIRST. Watch it fail. Then implement.
 ## Database Migrations
 - Migration files live in `supabase/migrations/`
 - Naming format: `NNN_sprint<XX>_<short_description>.sql` (e.g. `008_sprint07_admin_rates.sql`)
+- **Never apply a migration directly to the remote Supabase project without first
+  validating it locally via Docker** (`npx supabase start` / `npx supabase db reset`
+  against the local stack). Confirm the migration applies cleanly, RLS policies
+  work as expected, and — if needed — that it reverses/rolls back cleanly, before
+  running it against the real project. This makes mistakes cheap to catch and
+  easy to undo instead of debugging live data.
 - Every migration file MUST start with a comment block documenting:
   - What the migration does
   - Why it was needed (feature/sprint context)

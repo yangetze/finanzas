@@ -69,7 +69,11 @@ cp .env.example .env
 # Authentication → Settings → JWT expiry: 2592000 (30 días)
 # Authentication → URL Configuration → Site URL: http://localhost:5173
 
-# 6. Correr
+# 6. Vincular el CLI de Supabase al proyecto remoto (para `supabase db push`,
+#    `supabase migration list`, etc. — requiere estar logueado: `supabase login`)
+npx supabase link --project-ref aimhmbyfrxjamkehibup
+
+# 7. Correr
 pnpm dev
 ```
 

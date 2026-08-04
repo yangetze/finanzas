@@ -139,6 +139,49 @@ export interface Transaction {
   updatedAt: string
 }
 
+export type PersonalDebtDirection = 'they_owe_me' | 'i_owe_them'
+export type PersonalDebtStatus = 'open' | 'partial' | 'paid'
+export type PersonalDebtPaymentType = 'payment' | 'offset'
+
+export interface Debtor {
+  id: string
+  userId: string
+  name: string
+  notes: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PersonalDebt {
+  id: string
+  userId: string
+  debtorId: string
+  direction: PersonalDebtDirection
+  description: string
+  currencyId: string
+  originalAmount: number
+  date: string
+  status: PersonalDebtStatus
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PersonalDebtPayment {
+  id: string
+  userId: string
+  personalDebtId: string
+  walletId: string | null
+  amount: number
+  currencyId: string
+  date: string
+  paymentType: PersonalDebtPaymentType
+  offsetGroupId: string | null
+  notes: string | null
+  createdAt: string
+}
+
 export interface AuthState {
   session: import('@supabase/supabase-js').Session | null
   user: UserProfile | null
