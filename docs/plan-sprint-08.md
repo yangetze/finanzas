@@ -22,8 +22,8 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
 ## Tasks
 
 ### 1. Migración (validar en Docker local primero — ver regla en CLAUDE.md)
-- [ ] `npx supabase start` — levantar stack local
-- [ ] Escribir migración `019_sprint08_personal_debts.sql`:
+- [x] `npx supabase start` — levantar stack local
+- [x] Escribir migración `019_sprint08_personal_debts.sql`:
   - tabla `debtors` (id, user_id, name, notes, is_active, timestamps)
   - tabla `personal_debts` (id, user_id, debtor_id, direction, description,
     currency_id, original_amount, date, status, notes, timestamps)
@@ -31,31 +31,37 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
     nullable, amount, currency_id, date, payment_type, offset_group_id
     nullable, notes, created_at)
   - RLS policies (select/insert/update/delete `user_id = auth.uid()`) en las
-    tres tablas
+    tres tablas, con `with check` que valida propiedad cruzada
+    (`debtor_id`/`personal_debt_id`/`wallet_id` deben pertenecer al mismo
+    usuario, no solo `user_id` de la fila)
   - check constraints: `direction in ('they_owe_me','i_owe_them')`,
     `status in ('open','partial','paid')`,
     `payment_type in ('payment','offset')`
-- [ ] `npx supabase db reset` contra el stack local — confirmar que la
+- [x] `npx supabase db reset` contra el stack local — confirma que la
       migración aplica limpio desde cero junto con las migraciones existentes
-- [ ] Probar manualmente en local: insertar debtor + 2 personal_debts +
+- [x] Probar manualmente en local: insertar debtor + 2 personal_debts +
       simular la compensación del ejemplo guía, confirmar RLS bloquea acceso
-      cross-user
-- [ ] Solo después de validar en local: aplicar migración al proyecto remoto
+      cross-user (lectura y, tras el fix del `with check`, también inserción
+      cruzada)
+- [x] Aplicado al proyecto remoto (`aimhmbyfrxjamkehibup`) vía DDL dirigido,
+      no `db push` — el historial de migraciones remoto usa nombres de
+      archivo distintos a los locales 001-018 (ya aplicados ahí bajo otros
+      timestamps); ver [PR #42](https://github.com/yangetze/finanzas/pull/42)
 
 ### 2. Tipos (TDD: test primero donde aplique)
-- [ ] `src/types/index.ts`: agregar `Debtor`, `PersonalDebt`,
+- [x] `src/types/index.ts`: agregar `Debtor`, `PersonalDebt`,
       `PersonalDebtPayment`, `PersonalDebtDirection`, `PersonalDebtStatus`,
       `PersonalDebtPaymentType`
 
 ### 3. Lógica pura (lib) — TDD
-- [ ] `lib/personalDebtTotals.test.ts` — escribir tests primero, usando el
-      ejemplo guía (neto por deudor/moneda, saldo pendiente por debt,
-      resultado de una compensación)
-- [ ] `lib/personalDebtTotals.ts` — implementar:
+- [x] `lib/personalDebtTotals.test.ts` — tests primero, usando el ejemplo
+      guía (neto por deudor/moneda, saldo pendiente por debt, resultado de
+      una compensación, casos de error por dirección/moneda inválida)
+- [x] `lib/personalDebtTotals.ts` — implementado:
       `outstandingAmount(debt, payments)`,
       `netByDebtor(debts, payments)` (agrupado por currency),
       `computeOffset(debtA, debtB, paymentsA, paymentsB)` → montos y status
-      resultantes
+      resultantes (14/14 tests verdes)
 
 ### 4. Supabase helpers
 - [ ] `lib/supabase.ts`: CRUD de `debtors` y `personal_debts`,
