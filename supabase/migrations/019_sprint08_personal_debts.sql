@@ -40,7 +40,12 @@ create index idx_personal_debts_user on personal_debts(user_id);
 create index idx_personal_debts_debtor on personal_debts(debtor_id);
 
 alter table personal_debts enable row level security;
-create policy "personal_debts_own" on personal_debts for all using (auth.uid() = user_id);
+create policy "personal_debts_own" on personal_debts for all
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (select 1 from debtors d where d.id = debtor_id and d.user_id = auth.uid())
+  );
 
 create table personal_debt_payments (
   id uuid primary key default uuid_generate_v4(),
@@ -64,4 +69,10 @@ create index idx_personal_debt_payments_debt on personal_debt_payments(personal_
 create index idx_personal_debt_payments_offset_group on personal_debt_payments(offset_group_id);
 
 alter table personal_debt_payments enable row level security;
-create policy "personal_debt_payments_own" on personal_debt_payments for all using (auth.uid() = user_id);
+create policy "personal_debt_payments_own" on personal_debt_payments for all
+  using (auth.uid() = user_id)
+  with check (
+    auth.uid() = user_id
+    and exists (select 1 from personal_debts pd where pd.id = personal_debt_id and pd.user_id = auth.uid())
+    and (wallet_id is null or exists (select 1 from wallets w where w.id = wallet_id and w.user_id = auth.uid()))
+  );
