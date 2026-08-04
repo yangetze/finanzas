@@ -78,9 +78,16 @@ Compensar A y B → `offsetAmount = min(5, 4) = 4`
       estado local del cliente.
 
 ### 5. Hooks
-- [ ] `hooks/useDebtors.ts`
-- [ ] `hooks/usePersonalDebts.ts`
-- [ ] `hooks/usePersonalDebtPayments.ts`
+- [x] `hooks/useDebtors.tsx` (+ test) — `useDebtors`, `useCreateDebtor`,
+      `useUpdateDebtor`, `useDeactivateDebtor`
+- [x] `hooks/usePersonalDebts.tsx` (+ test) — `usePersonalDebts` (con
+      `debtorId` opcional), `useCreatePersonalDebt`, `useUpdatePersonalDebt`,
+      `useDeletePersonalDebt`
+- [x] `hooks/usePersonalDebtPayments.tsx` (+ test) — `usePersonalDebtPayments`,
+      `useAddPersonalDebtPayment`, `useDeletePersonalDebtPayment`,
+      `useCreatePersonalDebtOffset`, `useDeletePersonalDebtOffset`; las
+      mutaciones de pagos/offsets invalidan `personalDebtPayments`,
+      `personalDebts` y `wallets` (los balances cambian junto con el status)
 
 ### 6. UI
 - [ ] `components/personal-debts/DebtorCard.tsx` (+ test) — muestra neto por
