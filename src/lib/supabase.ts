@@ -850,6 +850,7 @@ export async function createPersonalDebt(data: {
   currencyId: string
   originalAmount: number
   date: string
+  isIndexed?: boolean
   notes?: string | null
 }) {
   const { error } = await supabase.from('personal_debts').insert({
@@ -861,6 +862,7 @@ export async function createPersonalDebt(data: {
     original_amount: data.originalAmount,
     date: data.date,
     status: 'open',
+    is_indexed: data.isIndexed ?? false,
     notes: data.notes ?? null,
   })
   if (error) throw error
@@ -874,6 +876,7 @@ export async function updatePersonalDebt(
     currencyId: string
     originalAmount: number
     date: string
+    isIndexed: boolean
     notes: string | null
   }>,
 ) {
@@ -883,6 +886,7 @@ export async function updatePersonalDebt(
   if (data.currencyId !== undefined) updates.currency_id = data.currencyId
   if (data.originalAmount !== undefined) updates.original_amount = data.originalAmount
   if (data.date !== undefined) updates.date = data.date
+  if (data.isIndexed !== undefined) updates.is_indexed = data.isIndexed
   if (data.notes !== undefined) updates.notes = data.notes
 
   const { error } = await supabase.from('personal_debts').update(updates).eq('id', id)
@@ -948,6 +952,9 @@ export async function addPersonalDebtPayment(data: {
   walletId: string
   amount: number
   currencyId: string
+  paymentCurrencyId: string
+  paymentAmount: number
+  conversionRate: number | null
   date: string
   notes?: string | null
 }) {
@@ -957,6 +964,9 @@ export async function addPersonalDebtPayment(data: {
     wallet_id: data.walletId,
     amount: data.amount,
     currency_id: data.currencyId,
+    payment_currency_id: data.paymentCurrencyId,
+    payment_amount: data.paymentAmount,
+    conversion_rate: data.conversionRate,
     date: data.date,
     payment_type: 'payment',
     offset_group_id: null,
@@ -965,8 +975,13 @@ export async function addPersonalDebtPayment(data: {
   if (error) throw error
 
   // i_owe_them: paying them hands money out of the wallet. they_owe_me:
-  // receiving their payment credits the wallet.
-  await adjustWalletBalance(data.walletId, data.debtDirection === 'i_owe_them' ? -data.amount : data.amount)
+  // receiving their payment credits the wallet. The wallet moves by
+  // paymentAmount (what actually changed hands), not amount (the debt's own
+  // currency), since those differ for indexed debts.
+  await adjustWalletBalance(
+    data.walletId,
+    data.debtDirection === 'i_owe_them' ? -data.paymentAmount : data.paymentAmount,
+  )
   await recalcPersonalDebtStatus(data.personalDebtId, data.debtOriginalAmount)
 }
 
@@ -976,12 +991,15 @@ export async function deletePersonalDebtPayment(payment: {
   debtDirection: PersonalDebtDirection
   debtOriginalAmount: number
   walletId: string
-  amount: number
+  paymentAmount: number
 }) {
   const { error } = await supabase.from('personal_debt_payments').delete().eq('id', payment.id)
   if (error) throw error
 
-  await adjustWalletBalance(payment.walletId, payment.debtDirection === 'i_owe_them' ? payment.amount : -payment.amount)
+  await adjustWalletBalance(
+    payment.walletId,
+    payment.debtDirection === 'i_owe_them' ? payment.paymentAmount : -payment.paymentAmount,
+  )
   await recalcPersonalDebtStatus(payment.personalDebtId, payment.debtOriginalAmount)
 }
 
@@ -1007,6 +1025,9 @@ export async function createPersonalDebtOffset(data: {
       wallet_id: null,
       amount: data.amount,
       currency_id: data.currencyId,
+      payment_currency_id: data.currencyId,
+      payment_amount: data.amount,
+      conversion_rate: null,
       date: data.date,
       payment_type: 'offset',
       offset_group_id: offsetGroupId,
@@ -1018,6 +1039,9 @@ export async function createPersonalDebtOffset(data: {
       wallet_id: null,
       amount: data.amount,
       currency_id: data.currencyId,
+      payment_currency_id: data.currencyId,
+      payment_amount: data.amount,
+      conversion_rate: null,
       date: data.date,
       payment_type: 'offset',
       offset_group_id: offsetGroupId,

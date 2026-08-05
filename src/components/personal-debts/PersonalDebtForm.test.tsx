@@ -50,6 +50,21 @@ describe('PersonalDebtForm', () => {
     )
   })
 
+  it('defaults isIndexed to false and includes it when toggled on', async () => {
+    const onSubmit = vi.fn()
+    render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={onSubmit} onCancel={vi.fn()} />)
+
+    await userEvent.type(screen.getByLabelText(/descripción/i), 'Cena')
+    await userEvent.type(screen.getByLabelText(/monto/i), '5')
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isIndexed: false }))
+
+    onSubmit.mockClear()
+    await userEvent.click(screen.getByRole('switch'))
+    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ isIndexed: true }))
+  })
+
   it('calls onCancel when cancel button is clicked', async () => {
     const onCancel = vi.fn()
     render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={vi.fn()} onCancel={onCancel} />)
@@ -67,6 +82,7 @@ describe('PersonalDebtForm', () => {
           currencyId: 'c1',
           originalAmount: 4,
           date: '2026-08-01',
+          isIndexed: false,
           notes: null,
         }}
         onSubmit={vi.fn()}

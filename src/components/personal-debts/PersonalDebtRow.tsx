@@ -65,6 +65,11 @@ export function PersonalDebtRow({
             <span className={`text-xs font-ui px-1.5 py-0.5 rounded ${STATUS_COLOR[debt.status]}`}>
               {STATUS_LABEL[debt.status]}
             </span>
+            {debt.isIndexed && (
+              <span className="text-xs font-ui px-1.5 py-0.5 rounded text-amber-fin bg-amber-fin/15">
+                Indexada
+              </span>
+            )}
           </div>
           <span className="text-xs font-ui text-ink-faint">{formatShortDate(debt.date)}</span>
         </div>

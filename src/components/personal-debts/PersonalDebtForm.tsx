@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { Toggle } from '@/components/ui/Toggle'
 import { Button } from '@/components/ui/Button'
 import type { Currency, PersonalDebtDirection } from '@/types'
 
@@ -10,6 +11,7 @@ interface PersonalDebtFormValues {
   currencyId: string
   originalAmount: number
   date: string
+  isIndexed: boolean
   notes: string | null
 }
 
@@ -19,6 +21,7 @@ interface PersonalDebtFormInitial {
   currencyId: string
   originalAmount: number
   date: string
+  isIndexed: boolean
   notes: string | null
 }
 
@@ -47,6 +50,7 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
     initialValues?.originalAmount != null ? String(initialValues.originalAmount) : '',
   )
   const [date, setDate] = useState(initialValues?.date ?? today())
+  const [isIndexed, setIsIndexed] = useState(initialValues?.isIndexed ?? false)
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [error, setError] = useState('')
 
@@ -68,6 +72,7 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
       currencyId,
       originalAmount: amount,
       date,
+      isIndexed,
       notes: notes.trim() || null,
     })
   }
@@ -113,6 +118,13 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
       </div>
 
       <Input label="Fecha" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+
+      <Toggle
+        checked={isIndexed}
+        onChange={setIsIndexed}
+        label="Deuda indexada"
+        description="El monto queda anclado a esta moneda, pero se puede pagar en otra a la tasa del día"
+      />
 
       <Input
         label="Notas"
