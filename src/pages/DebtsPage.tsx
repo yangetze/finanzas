@@ -84,6 +84,7 @@ export function DebtsPage() {
     currencyId: string
     originalAmount: number
     date: string
+    isIndexed: boolean
     notes: string | null
   }) {
     if (!debtorForDebt) return
@@ -93,7 +94,15 @@ export function DebtsPage() {
     )
   }
 
-  function handlePaymentSubmit(values: { walletId: string; amount: number; date: string; notes: string | null }) {
+  function handlePaymentSubmit(values: {
+    walletId: string
+    amount: number
+    paymentCurrencyId: string
+    paymentAmount: number
+    conversionRate: number | null
+    date: string
+    notes: string | null
+  }) {
     if (!debtForPayment) return
     addPersonalDebtPayment.mutate(
       {
@@ -132,7 +141,7 @@ export function DebtsPage() {
       debtDirection: debt.direction,
       debtOriginalAmount: debt.originalAmount,
       walletId: payment.walletId,
-      amount: payment.amount,
+      paymentAmount: payment.paymentAmount,
     })
   }
 
@@ -280,8 +289,10 @@ export function DebtsPage() {
                       </h2>
                       <PersonalDebtPaymentForm
                         wallets={wallets ?? []}
+                        currencies={currencies ?? []}
                         currency={currency}
                         outstanding={outstandingAmount(debtForPayment, payments ?? [])}
+                        isIndexed={debtForPayment.isIndexed}
                         onSubmit={handlePaymentSubmit}
                         onCancel={closeAllForms}
                         loading={addPersonalDebtPayment.isPending}

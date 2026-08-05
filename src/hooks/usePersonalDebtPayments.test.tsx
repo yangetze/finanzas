@@ -44,6 +44,9 @@ const MOCK_PAYMENT_ROW = {
   wallet_id: 'w1',
   amount: 4,
   currency_id: 'usd',
+  payment_currency_id: 'usd',
+  payment_amount: 4,
+  conversion_rate: null,
   date: '2026-08-04',
   payment_type: 'payment',
   offset_group_id: null,
@@ -58,6 +61,9 @@ const MOCK_PAYMENT = {
   walletId: 'w1',
   amount: 4,
   currencyId: 'usd',
+  paymentCurrencyId: 'usd',
+  paymentAmount: 4,
+  conversionRate: null,
   date: '2026-08-04',
   paymentType: 'payment',
   offsetGroupId: null,
@@ -119,6 +125,9 @@ describe('useAddPersonalDebtPayment', () => {
       walletId: 'w1',
       amount: 4,
       currencyId: 'usd',
+      paymentCurrencyId: 'usd',
+      paymentAmount: 4,
+      conversionRate: null,
       date: '2026-08-04',
     })
 
@@ -137,7 +146,7 @@ describe('useDeletePersonalDebtPayment', () => {
       debtDirection: 'i_owe_them' as const,
       debtOriginalAmount: 5,
       walletId: 'w1',
-      amount: 4,
+      paymentAmount: 4,
     }
     result.current.mutate(payment)
 

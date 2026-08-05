@@ -35,6 +35,7 @@ const DEBT: PersonalDebt = {
   originalAmount: 5,
   date: '2026-08-01',
   status: 'open',
+  isIndexed: false,
   notes: null,
   createdAt: '2026-08-01',
   updatedAt: '2026-08-01',

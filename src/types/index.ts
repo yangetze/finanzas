@@ -163,6 +163,7 @@ export interface PersonalDebt {
   originalAmount: number
   date: string
   status: PersonalDebtStatus
+  isIndexed: boolean
   notes: string | null
   createdAt: string
   updatedAt: string
@@ -175,6 +176,9 @@ export interface PersonalDebtPayment {
   walletId: string | null
   amount: number
   currencyId: string
+  paymentCurrencyId: string
+  paymentAmount: number
+  conversionRate: number | null
   date: string
   paymentType: PersonalDebtPaymentType
   offsetGroupId: string | null
