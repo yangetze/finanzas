@@ -80,6 +80,29 @@ describe('CasheaForm', () => {
     expect(txs[2].installmentNumber).toBe(3)
     // each installment = 90/3 = 30
     expect(txs[0].paymentAmount).toBeCloseTo(30)
+    expect(txs[0].isIndexed).toBe(false)
+  })
+
+  it('marks every installment as indexed when the toggle is on', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
+      <CasheaForm
+        envelopes={[ENVELOPE]}
+        wallets={[WALLET]}
+        currencies={[CURRENCY]}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    )
+    await user.type(screen.getByLabelText(/descripción/i), 'iPhone 15')
+    await user.clear(screen.getByLabelText(/monto total/i))
+    await user.type(screen.getByLabelText(/monto total/i), '90')
+    await user.click(screen.getByRole('switch'))
+    await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+    const txs = onSubmit.mock.calls[0][0]
+    expect(txs.every((t: { isIndexed: boolean }) => t.isIndexed)).toBe(true)
   })
 
   it('calls onCancel when cancel clicked', async () => {

@@ -9,6 +9,7 @@ import {
   updateTransaction,
   deleteTransaction,
   markTransactionPaid,
+  markTransactionPaidIndexed,
   markIncomeReceived,
 } from '@/lib/supabase'
 import type { Transaction } from '@/types'
@@ -31,6 +32,7 @@ function mapTransaction(row: Record<string, unknown>): Transaction {
     baseCurrencyId: row.base_currency_id as string,
     baseAmount: row.base_amount as number,
     baseRate: row.base_rate as number | null,
+    isIndexed: row.is_indexed as boolean,
     budgetItemId: row.budget_item_id as string | null,
     installmentNumber: row.installment_number as number | null,
     installmentTotal: row.installment_total as number | null,
@@ -101,6 +103,17 @@ export function useMarkTransactionPaid() {
   return useMutation({
     mutationFn: ({ id, walletId, paymentAmount }: { id: string; walletId: string | null; paymentAmount: number }) =>
       markTransactionPaid(id, walletId, paymentAmount),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['wallets'] })
+    },
+  })
+}
+
+export function useMarkTransactionPaidIndexed() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: markTransactionPaidIndexed,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['transactions'] })
       qc.invalidateQueries({ queryKey: ['wallets'] })

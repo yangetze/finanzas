@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
+import { Toggle } from '@/components/ui/Toggle'
 import { Button } from '@/components/ui/Button'
 import type { Envelope, Wallet, Currency } from '@/types'
 
@@ -21,6 +22,7 @@ interface CasheaTransaction {
   baseCurrencyId: string
   baseAmount: number
   baseRate: null
+  isIndexed: boolean
   installmentNumber: number
   installmentTotal: number
   groupId: string
@@ -59,6 +61,7 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
   const [envelopeId, setEnvelopeId] = useState(NONE)
   const [walletId, setWalletId] = useState(NONE)
   const [currencyId, setCurrencyId] = useState(currencies[0]?.id ?? '')
+  const [isIndexed, setIsIndexed] = useState(false)
   const [notes, setNotes] = useState('')
   const [descError, setDescError] = useState('')
 
@@ -100,6 +103,7 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
       baseCurrencyId: baseCcy,
       baseAmount: installmentAmount,
       baseRate: null,
+      isIndexed,
       installmentNumber: i + 1,
       installmentTotal: n,
       groupId,
@@ -173,6 +177,13 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
         options={walletOptions}
         value={walletId}
         onChange={(e) => setWalletId(e.target.value)}
+      />
+
+      <Toggle
+        checked={isIndexed}
+        onChange={setIsIndexed}
+        label="Compra indexada"
+        description="El monto de cada cuota queda anclado a esta moneda, pero se puede pagar en otra a la tasa del día"
       />
 
       <Input
