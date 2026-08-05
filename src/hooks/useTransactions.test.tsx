@@ -3,15 +3,23 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-const { mockGetTransactions, mockCreateTransaction, mockUpdateTransaction, mockDeleteTransaction, mockGetUpcoming, mockBatch } =
-  vi.hoisted(() => ({
-    mockGetTransactions: vi.fn(),
-    mockCreateTransaction: vi.fn(),
-    mockUpdateTransaction: vi.fn(),
-    mockDeleteTransaction: vi.fn(),
-    mockGetUpcoming: vi.fn(),
-    mockBatch: vi.fn(),
-  }))
+const {
+  mockGetTransactions,
+  mockCreateTransaction,
+  mockUpdateTransaction,
+  mockDeleteTransaction,
+  mockGetUpcoming,
+  mockBatch,
+  mockMarkTransactionPaidIndexed,
+} = vi.hoisted(() => ({
+  mockGetTransactions: vi.fn(),
+  mockCreateTransaction: vi.fn(),
+  mockUpdateTransaction: vi.fn(),
+  mockDeleteTransaction: vi.fn(),
+  mockGetUpcoming: vi.fn(),
+  mockBatch: vi.fn(),
+  mockMarkTransactionPaidIndexed: vi.fn(),
+}))
 
 vi.mock('@/lib/supabase', () => ({
   getTransactions: mockGetTransactions,
@@ -20,6 +28,7 @@ vi.mock('@/lib/supabase', () => ({
   deleteTransaction: mockDeleteTransaction,
   getUpcomingTransactions: mockGetUpcoming,
   createTransactionsBatch: mockBatch,
+  markTransactionPaidIndexed: mockMarkTransactionPaidIndexed,
 }))
 
 import {
@@ -29,6 +38,7 @@ import {
   useUpdateTransaction,
   useDeleteTransaction,
   useCreateTransactionsBatch,
+  useMarkTransactionPaidIndexed,
 } from './useTransactions'
 
 const MOCK_ROW = {
@@ -48,6 +58,7 @@ const MOCK_ROW = {
   base_currency_id: 'c1',
   base_amount: 15,
   base_rate: null,
+  is_indexed: false,
   installment_number: null,
   installment_total: null,
   group_id: null,
@@ -73,6 +84,7 @@ const MOCK_TX = {
   baseCurrencyId: 'c1',
   baseAmount: 15,
   baseRate: null,
+  isIndexed: false,
   installmentNumber: null,
   installmentTotal: null,
   groupId: null,
@@ -169,5 +181,20 @@ describe('useCreateTransactionsBatch', () => {
     const { result } = renderHook(() => useCreateTransactionsBatch(), { wrapper })
     result.current.mutate([])
     await waitFor(() => expect(mockBatch).toHaveBeenCalledTimes(1))
+  })
+})
+
+describe('useMarkTransactionPaidIndexed', () => {
+  it('calls markTransactionPaidIndexed', async () => {
+    mockMarkTransactionPaidIndexed.mockResolvedValue(undefined)
+    const { result } = renderHook(() => useMarkTransactionPaidIndexed(), { wrapper })
+    result.current.mutate({
+      id: 't1',
+      walletId: 'w1',
+      paymentCurrencyId: 'ves',
+      paymentAmount: 4500,
+      conversionRate: 150,
+    })
+    await waitFor(() => expect(mockMarkTransactionPaidIndexed).toHaveBeenCalledTimes(1))
   })
 })

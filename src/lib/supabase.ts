@@ -379,6 +379,7 @@ export async function createTransaction(data: {
   baseCurrencyId: string
   baseAmount: number
   baseRate?: number | null
+  isIndexed?: boolean
   notes?: string | null
 }) {
   const { error } = await supabase.from('transactions').insert({
@@ -398,6 +399,7 @@ export async function createTransaction(data: {
     base_currency_id: data.baseCurrencyId,
     base_amount: data.baseAmount,
     base_rate: data.baseRate ?? null,
+    is_indexed: data.isIndexed ?? false,
     notes: data.notes ?? null,
     installment_number: null,
     installment_total: null,
@@ -424,6 +426,10 @@ export async function createTransactionsBatch(
     baseCurrencyId: string
     baseAmount: number
     baseRate?: number | null
+    isIndexed?: boolean
+    installmentNumber?: number | null
+    installmentTotal?: number | null
+    groupId?: string | null
     notes?: string | null
   }>,
 ) {
@@ -444,10 +450,11 @@ export async function createTransactionsBatch(
     base_currency_id: t.baseCurrencyId,
     base_amount: t.baseAmount,
     base_rate: t.baseRate ?? null,
+    is_indexed: t.isIndexed ?? false,
     notes: t.notes ?? null,
-    installment_number: null,
-    installment_total: null,
-    group_id: null,
+    installment_number: t.installmentNumber ?? null,
+    installment_total: t.installmentTotal ?? null,
+    group_id: t.groupId ?? null,
   }))
   const { error } = await supabase.from('transactions').insert(rows)
   if (error) throw error
@@ -471,6 +478,7 @@ export async function updateTransaction(
     baseCurrencyId: string
     baseAmount: number
     baseRate: number | null
+    isIndexed: boolean
     notes: string | null
   }>,
 ) {
@@ -490,6 +498,7 @@ export async function updateTransaction(
   if (data.baseCurrencyId !== undefined) updates.base_currency_id = data.baseCurrencyId
   if (data.baseAmount !== undefined) updates.base_amount = data.baseAmount
   if (data.baseRate !== undefined) updates.base_rate = data.baseRate
+  if (data.isIndexed !== undefined) updates.is_indexed = data.isIndexed
   if (data.notes !== undefined) updates.notes = data.notes
   const { error } = await supabase.from('transactions').update(updates).eq('id', id)
   if (error) throw error
@@ -576,6 +585,28 @@ export async function markTransactionPaid(
   if (walletId) {
     await adjustWalletBalance(walletId, -paymentAmount)
   }
+}
+
+// For is_indexed transactions: the payment currency/amount/rate aren't
+// known until the moment of payment (see docs/plan-sprint-10.md), so this
+// fixes them on the transaction itself instead of trusting the placeholder
+// values set at creation, and moves the wallet by the real paymentAmount
+// (not originAmount, which stays the anchor and is left untouched).
+export async function markTransactionPaidIndexed(data: {
+  id: string
+  walletId: string
+  paymentCurrencyId: string
+  paymentAmount: number
+  conversionRate: number | null
+}) {
+  await updateTransaction(data.id, {
+    status: 'pagado',
+    walletId: data.walletId,
+    paymentCurrencyId: data.paymentCurrencyId,
+    paymentAmount: data.paymentAmount,
+    conversionRate: data.conversionRate,
+  })
+  await adjustWalletBalance(data.walletId, -data.paymentAmount)
 }
 
 export async function markIncomeReceived(

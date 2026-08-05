@@ -30,6 +30,7 @@ function makeIncome(overrides: Partial<Transaction> = {}): Transaction {
     baseCurrencyId: 'c1',
     baseAmount: 1500,
     baseRate: null,
+    isIndexed: false,
     budgetItemId: null,
     installmentNumber: null,
     installmentTotal: null,

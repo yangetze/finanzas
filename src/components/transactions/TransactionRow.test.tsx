@@ -46,6 +46,7 @@ const TX: Transaction = {
   baseCurrencyId: 'c1',
   baseAmount: 15,
   baseRate: null,
+  isIndexed: false,
   budgetItemId: null,
   installmentNumber: null,
   installmentTotal: null,
@@ -59,19 +60,19 @@ const noop = vi.fn()
 
 describe('TransactionRow', () => {
   it('renders description and amount', () => {
-    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onDelete={noop} />)
+    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
     expect(screen.getByText('Netflix junio')).toBeInTheDocument()
     expect(screen.getByText(/15,00/)).toBeInTheDocument()
   })
 
   it('shows pagado badge for pagado status', () => {
-    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onDelete={noop} />)
+    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
     expect(screen.getByText('Pagado')).toBeInTheDocument()
   })
 
   it('shows apartado badge for apartado status', () => {
     const tx = { ...TX, status: 'apartado' as const }
-    render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onDelete={noop} />)
+    render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
     expect(screen.getByText('Apartado')).toBeInTheDocument()
   })
 
@@ -83,6 +84,7 @@ describe('TransactionRow', () => {
         envelope={ENVELOPE}
         onEdit={noop}
         onMarkPaid={noop}
+        onMarkPaidIndexed={noop}
         onDelete={noop}
       />,
     )
@@ -93,15 +95,41 @@ describe('TransactionRow', () => {
     const user = userEvent.setup()
     const onMarkPaid = vi.fn()
     const tx = { ...TX, status: 'apartado' as const }
-    render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={onMarkPaid} onDelete={noop} />)
+    render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={onMarkPaid} onMarkPaidIndexed={noop} onDelete={noop} />)
     await user.click(screen.getByRole('button', { name: /pagar/i }))
     expect(onMarkPaid).toHaveBeenCalledWith('t1')
+  })
+
+  it('calls onMarkPaidIndexed instead of onMarkPaid for an indexed apartado transaction', async () => {
+    const user = userEvent.setup()
+    const onMarkPaid = vi.fn()
+    const onMarkPaidIndexed = vi.fn()
+    const tx = { ...TX, status: 'apartado' as const, isIndexed: true }
+    render(
+      <TransactionRow
+        transaction={tx}
+        currency={CURRENCY}
+        onEdit={noop}
+        onMarkPaid={onMarkPaid}
+        onMarkPaidIndexed={onMarkPaidIndexed}
+        onDelete={noop}
+      />,
+    )
+    await user.click(screen.getByRole('button', { name: /pagar/i }))
+    expect(onMarkPaidIndexed).toHaveBeenCalledWith(tx)
+    expect(onMarkPaid).not.toHaveBeenCalled()
+  })
+
+  it('shows an "Indexada" badge for indexed transactions', () => {
+    const tx = { ...TX, isIndexed: true }
+    render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
+    expect(screen.getByText(/indexada/i)).toBeInTheDocument()
   })
 
   it('calls onEdit when edit button clicked', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={onEdit} onMarkPaid={noop} onDelete={noop} />)
+    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={onEdit} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
     await user.click(screen.getByRole('button', { name: /editar/i }))
     expect(onEdit).toHaveBeenCalledWith(TX)
   })
@@ -109,7 +137,7 @@ describe('TransactionRow', () => {
   it('calls onDelete when delete button clicked', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
-    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onDelete={onDelete} />)
+    render(<TransactionRow transaction={TX} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={onDelete} />)
     await user.click(screen.getByRole('button', { name: /anular/i }))
     expect(onDelete).toHaveBeenCalledWith('t1')
   })

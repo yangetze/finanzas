@@ -8,6 +8,7 @@ interface TransactionRowProps {
   envelope?: Envelope
   onEdit: (tx: Transaction) => void
   onMarkPaid: (id: string) => void
+  onMarkPaidIndexed: (tx: Transaction) => void
   onDelete: (id: string) => void
 }
 
@@ -18,7 +19,15 @@ const STATUS_LABELS: Record<Transaction['status'], string> = {
   anulado: 'Anulado',
 }
 
-export function TransactionRow({ transaction: tx, currency, envelope, onEdit, onMarkPaid, onDelete }: TransactionRowProps) {
+export function TransactionRow({
+  transaction: tx,
+  currency,
+  envelope,
+  onEdit,
+  onMarkPaid,
+  onMarkPaidIndexed,
+  onDelete,
+}: TransactionRowProps) {
   const amount = tx.paymentAmount.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
   return (
@@ -37,6 +46,11 @@ export function TransactionRow({ transaction: tx, currency, envelope, onEdit, on
           >
             {STATUS_LABELS[tx.status]}
           </span>
+          {tx.isIndexed && (
+            <span className="text-xs font-ui px-1.5 py-0.5 rounded text-amber-fin bg-amber-fin/15">
+              Indexada
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span className="text-xs font-ui text-ink-faint">{tx.date}</span>
@@ -65,7 +79,7 @@ export function TransactionRow({ transaction: tx, currency, envelope, onEdit, on
           <button
             type="button"
             aria-label="Pagar"
-            onClick={() => onMarkPaid(tx.id)}
+            onClick={() => (tx.isIndexed ? onMarkPaidIndexed(tx) : onMarkPaid(tx.id))}
             className="p-1.5 rounded text-ink-faint hover:text-sage transition-colors"
           >
             <CheckCircle size={15} />

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, ShoppingBag } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch, useMarkTransactionPaid } from '@/hooks/useTransactions'
+import { useTransactions, useCreateTransaction, useUpdateTransaction, useDeleteTransaction, useCreateTransactionsBatch, useMarkTransactionPaid, useMarkTransactionPaidIndexed } from '@/hooks/useTransactions'
 import { useBudgetItems } from '@/hooks/useBudgetItems'
 import { useUpsertEnvelopeAllocations } from '@/hooks/useEnvelopeAllocations'
 import { useEnvelopes } from '@/hooks/useEnvelopes'
@@ -10,6 +10,7 @@ import { useCurrencies } from '@/hooks/useCurrencies'
 import { TransactionRow } from '@/components/transactions/TransactionRow'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
 import { CasheaForm } from '@/components/transactions/CasheaForm'
+import { TransactionPayForm } from '@/components/transactions/TransactionPayForm'
 import { MonthOpener } from '@/components/budget/MonthOpener'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
@@ -30,6 +31,7 @@ export function TransactionsPage() {
   const [showForm, setShowForm] = useState(false)
   const [showCashea, setShowCashea] = useState(false)
   const [editing, setEditing] = useState<Transaction | null>(null)
+  const [payingTx, setPayingTx] = useState<Transaction | null>(null)
 
   const { data: transactions, isLoading: txLoading } = useTransactions(user?.id, month)
   const { data: budgetItems } = useBudgetItems(user?.id)
@@ -42,6 +44,7 @@ export function TransactionsPage() {
   const deleteTx = useDeleteTransaction()
   const batchCreate = useCreateTransactionsBatch()
   const markPaid = useMarkTransactionPaid()
+  const markPaidIndexed = useMarkTransactionPaidIndexed()
   const upsertAllocations = useUpsertEnvelopeAllocations()
 
   const [year, monthNum] = month.split('-').map(Number)
@@ -58,6 +61,7 @@ export function TransactionsPage() {
     setShowForm(false)
     setShowCashea(false)
     setEditing(null)
+    setPayingTx(null)
   }
 
   function handleEdit(tx: Transaction) {
@@ -69,6 +73,16 @@ export function TransactionsPage() {
     const tx = transactions?.find((t) => t.id === id)
     if (!tx) return
     markPaid.mutate({ id, walletId: tx.walletId, paymentAmount: tx.paymentAmount })
+  }
+
+  function handlePayIndexedSubmit(values: {
+    walletId: string
+    paymentCurrencyId: string
+    paymentAmount: number
+    conversionRate: number | null
+  }) {
+    if (!payingTx) return
+    markPaidIndexed.mutate({ id: payingTx.id, ...values }, { onSuccess: handleClose })
   }
 
   function handleDelete(id: string) {
@@ -180,6 +194,31 @@ export function TransactionsPage() {
         </div>
       )}
 
+      {payingTx &&
+        wallets &&
+        currencies &&
+        (() => {
+          const currency = getCurrency(payingTx.originCurrencyId)
+          if (!currency) return null
+          return (
+            <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+              <ScrollAnchor />
+              <h2 className="text-base font-ui font-semibold text-ink mb-4">
+                Registrar pago — {payingTx.description}
+              </h2>
+              <TransactionPayForm
+                wallets={wallets}
+                currencies={currencies}
+                currency={currency}
+                amount={payingTx.originAmount}
+                onSubmit={handlePayIndexedSubmit}
+                onCancel={handleClose}
+                loading={markPaidIndexed.isPending}
+              />
+            </div>
+          )
+        })()}
+
       {showForm && envelopes && wallets && currencies && (
         <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
           <ScrollAnchor />
@@ -263,6 +302,7 @@ export function TransactionsPage() {
                     envelope={getEnvelope(tx.envelopeId)}
                     onEdit={handleEdit}
                     onMarkPaid={handleMarkPaid}
+                    onMarkPaidIndexed={(tx) => setPayingTx(tx)}
                     onDelete={handleDelete}
                   />
                 </div>
