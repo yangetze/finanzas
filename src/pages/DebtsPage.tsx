@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
-import { useWallets } from '@/hooks/useWallets'
+import { useWallets, usePayCreditCardBalance } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
 import { useDebtors, useCreateDebtor, useUpdateDebtor, useDeactivateDebtor } from '@/hooks/useDebtors'
 import { usePersonalDebts, useCreatePersonalDebt, useDeletePersonalDebt } from '@/hooks/usePersonalDebts'
@@ -14,6 +14,7 @@ import {
   useDeletePersonalDebtOffset,
 } from '@/hooks/usePersonalDebtPayments'
 import { TDCCard } from '@/components/debts/TDCCard'
+import { PayCreditCardForm } from '@/components/debts/PayCreditCardForm'
 import { DebtorCard } from '@/components/personal-debts/DebtorCard'
 import { DebtorForm } from '@/components/personal-debts/DebtorForm'
 import { PersonalDebtForm } from '@/components/personal-debts/PersonalDebtForm'
@@ -23,7 +24,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ScrollAnchor } from '@/components/ui/ScrollAnchor'
 import { netByDebtor, outstandingAmount } from '@/lib/personalDebtTotals'
-import type { Debtor, PersonalDebt, PersonalDebtPayment } from '@/types'
+import type { Debtor, PersonalDebt, PersonalDebtPayment, Wallet } from '@/types'
 
 type Tab = 'tdc' | 'personas'
 
@@ -46,12 +47,14 @@ export function DebtsPage() {
   const deletePersonalDebtPayment = useDeletePersonalDebtPayment()
   const createPersonalDebtOffset = useCreatePersonalDebtOffset()
   const deletePersonalDebtOffset = useDeletePersonalDebtOffset()
+  const payCreditCardBalance = usePayCreditCardBalance()
 
   const [showDebtorForm, setShowDebtorForm] = useState(false)
   const [editingDebtor, setEditingDebtor] = useState<Debtor | null>(null)
   const [debtorForDebt, setDebtorForDebt] = useState<Debtor | null>(null)
   const [debtForPayment, setDebtForPayment] = useState<PersonalDebt | null>(null)
   const [debtorForOffset, setDebtorForOffset] = useState<Debtor | null>(null)
+  const [cardForPayment, setCardForPayment] = useState<Wallet | null>(null)
 
   const isLoading = walletsLoading || currenciesLoading
   const isPersonasLoading = debtorsLoading || debtsLoading || paymentsLoading || currenciesLoading
@@ -68,6 +71,26 @@ export function DebtsPage() {
     setDebtorForDebt(null)
     setDebtForPayment(null)
     setDebtorForOffset(null)
+    setCardForPayment(null)
+  }
+
+  function handlePayCreditCardSubmit(values: {
+    walletId: string
+    amount: number
+    paymentCurrencyId: string
+    paymentAmount: number
+    conversionRate: number | null
+  }) {
+    if (!cardForPayment) return
+    payCreditCardBalance.mutate(
+      {
+        creditWalletId: cardForPayment.id,
+        amount: values.amount,
+        sourceWalletId: values.walletId,
+        paymentAmount: values.paymentAmount,
+      },
+      { onSuccess: closeAllForms },
+    )
   }
 
   function handleDebtorSubmit(values: { name: string; notes: string | null }) {
@@ -220,12 +243,43 @@ export function DebtsPage() {
             </div>
           )}
 
+          {cardForPayment &&
+            (() => {
+              const currency = getCurrency(cardForPayment.currencyId)
+              const assetWallets = (wallets ?? []).filter((w) => w.type === 'asset')
+              if (!currency) return null
+              return (
+                <div className="bg-canvas-soft border border-border rounded-xl p-4 md:p-5">
+                  <ScrollAnchor />
+                  <h2 className="text-base font-ui font-semibold text-ink mb-4">
+                    Pagar {cardForPayment.name}
+                  </h2>
+                  <PayCreditCardForm
+                    wallets={assetWallets}
+                    currencies={currencies ?? []}
+                    currency={currency}
+                    outstanding={cardForPayment.balance}
+                    onSubmit={handlePayCreditCardSubmit}
+                    onCancel={closeAllForms}
+                    loading={payCreditCardBalance.isPending}
+                  />
+                </div>
+              )
+            })()}
+
           {creditWallets.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {creditWallets.map((wallet) => {
                 const currency = getCurrency(wallet.currencyId)
                 if (!currency) return null
-                return <TDCCard key={wallet.id} wallet={wallet} currency={currency} />
+                return (
+                  <TDCCard
+                    key={wallet.id}
+                    wallet={wallet}
+                    currency={currency}
+                    onPay={(w) => setCardForPayment(w)}
+                  />
+                )
               })}
             </div>
           )}

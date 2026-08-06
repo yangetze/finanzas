@@ -1,5 +1,6 @@
 import { CreditCard } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import type { Wallet, Currency } from '@/types'
 
@@ -17,9 +18,10 @@ function fmtAvailable(amount: number, symbol: string) {
 interface TDCCardProps {
   wallet: Wallet
   currency: Currency
+  onPay?: (wallet: Wallet) => void
 }
 
-export function TDCCard({ wallet, currency }: TDCCardProps) {
+export function TDCCard({ wallet, currency, onPay }: TDCCardProps) {
   const used = wallet.balance
   const limit = wallet.creditLimit
   const available = limit !== null ? limit - used : null
@@ -31,7 +33,14 @@ export function TDCCard({ wallet, currency }: TDCCardProps) {
           <CreditCard size={16} className="text-ink-muted shrink-0" />
           <span className="text-sm font-ui font-medium text-ink">{wallet.name}</span>
         </div>
-        <span className="text-xs font-ui text-ink-faint">{currency.code}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-ui text-ink-faint">{currency.code}</span>
+          {onPay && used > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => onPay(wallet)}>
+              Pagar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex items-baseline justify-between">

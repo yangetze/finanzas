@@ -3,23 +3,24 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-const { mockGetWallets, mockCreateWallet, mockUpdateWallet, mockDeactivateWallet } = vi.hoisted(
-  () => ({
+const { mockGetWallets, mockCreateWallet, mockUpdateWallet, mockDeactivateWallet, mockPayCreditCardBalance } =
+  vi.hoisted(() => ({
     mockGetWallets: vi.fn(),
     mockCreateWallet: vi.fn(),
     mockUpdateWallet: vi.fn(),
     mockDeactivateWallet: vi.fn(),
-  }),
-)
+    mockPayCreditCardBalance: vi.fn(),
+  }))
 
 vi.mock('@/lib/supabase', () => ({
   getWallets: mockGetWallets,
   createWallet: mockCreateWallet,
   updateWallet: mockUpdateWallet,
   deactivateWallet: mockDeactivateWallet,
+  payCreditCardBalance: mockPayCreditCardBalance,
 }))
 
-import { useWallets, useCreateWallet, useDeactivateWallet } from './useWallets'
+import { useWallets, useCreateWallet, useDeactivateWallet, usePayCreditCardBalance } from './useWallets'
 
 const MOCK_WALLET_ROW = {
   id: 'w1',
@@ -108,5 +109,22 @@ describe('useDeactivateWallet', () => {
       expect(mockDeactivateWallet).toHaveBeenCalledTimes(1)
       expect(mockDeactivateWallet.mock.calls[0][0]).toBe('w1')
     })
+  })
+})
+
+describe('usePayCreditCardBalance', () => {
+  it('calls payCreditCardBalance', async () => {
+    mockPayCreditCardBalance.mockResolvedValue(undefined)
+
+    const { result } = renderHook(() => usePayCreditCardBalance(), { wrapper })
+
+    result.current.mutate({
+      creditWalletId: 'w-tdc',
+      amount: 10,
+      sourceWalletId: 'w-ves',
+      paymentAmount: 1500,
+    })
+
+    await waitFor(() => expect(mockPayCreditCardBalance).toHaveBeenCalledTimes(1))
   })
 })

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getWallets, createWallet, updateWallet, deactivateWallet } from '@/lib/supabase'
+import { getWallets, createWallet, updateWallet, deactivateWallet, payCreditCardBalance } from '@/lib/supabase'
 import type { Wallet } from '@/types'
 
 function mapWallet(row: Record<string, unknown>): Wallet {
@@ -51,6 +51,14 @@ export function useDeactivateWallet() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: deactivateWallet,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
+  })
+}
+
+export function usePayCreditCardBalance() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: payCreditCardBalance,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
   })
 }

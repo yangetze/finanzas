@@ -576,6 +576,21 @@ async function adjustWalletBalance(walletId: string, delta: number) {
   }
 }
 
+// Pays down a credit wallet's balance (amount owed, in the card's own
+// currency) from any other wallet, possibly in a different currency at
+// today's rate (see docs/plan-sprint-11.md). No new row/table — TDC has no
+// per-charge ledger, just a running balance, so this is purely a balance
+// move between the two wallets, unlike personal_debts/transactions.
+export async function payCreditCardBalance(data: {
+  creditWalletId: string
+  amount: number
+  sourceWalletId: string
+  paymentAmount: number
+}) {
+  await adjustWalletBalance(data.creditWalletId, -data.amount)
+  await adjustWalletBalance(data.sourceWalletId, -data.paymentAmount)
+}
+
 export async function markTransactionPaid(
   id: string,
   walletId: string | null,
