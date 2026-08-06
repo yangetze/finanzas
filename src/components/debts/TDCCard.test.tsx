@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { TDCCard } from './TDCCard'
 import type { Wallet, Currency } from '@/types'
 
@@ -61,5 +62,23 @@ describe('TDCCard', () => {
   it('shows currency code', () => {
     render(<TDCCard wallet={WALLET} currency={CURRENCY} />)
     expect(screen.getByText('USDC')).toBeInTheDocument()
+  })
+
+  it('does not show a Pagar button when onPay is not provided', () => {
+    render(<TDCCard wallet={WALLET} currency={CURRENCY} />)
+    expect(screen.queryByRole('button', { name: /pagar/i })).not.toBeInTheDocument()
+  })
+
+  it('hides the Pagar button when nothing is owed', () => {
+    const paidOff = { ...WALLET, balance: 0 }
+    render(<TDCCard wallet={paidOff} currency={CURRENCY} onPay={vi.fn()} />)
+    expect(screen.queryByRole('button', { name: /pagar/i })).not.toBeInTheDocument()
+  })
+
+  it('calls onPay with the wallet when Pagar is clicked', async () => {
+    const onPay = vi.fn()
+    render(<TDCCard wallet={WALLET} currency={CURRENCY} onPay={onPay} />)
+    await userEvent.click(screen.getByRole('button', { name: /pagar/i }))
+    expect(onPay).toHaveBeenCalledWith(WALLET)
   })
 })
