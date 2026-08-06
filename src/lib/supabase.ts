@@ -719,6 +719,8 @@ export async function createTransfer(data: {
   date: string
   fromWalletId: string
   toWalletId: string
+  fromWalletType?: 'asset' | 'credit'
+  toWalletType?: 'asset' | 'credit'
   fromCurrencyId: string
   toCurrencyId: string
   amountSent: number
@@ -778,14 +780,20 @@ export async function createTransfer(data: {
   })
   if (error) throw error
 
-  await adjustWalletBalance(data.fromWalletId, -data.amountSent)
-  await adjustWalletBalance(data.toWalletId, data.amountReceived)
+  // Asset wallets hold cash: sending debits, receiving credits. Credit
+  // wallets hold debt owed (positive = owed): sending (a cash advance)
+  // increases what's owed, receiving (paying the card down) decreases it —
+  // the opposite sign, see docs/plan-sprint-11.md.
+  await adjustWalletBalance(data.fromWalletId, data.fromWalletType === 'credit' ? data.amountSent : -data.amountSent)
+  await adjustWalletBalance(data.toWalletId, data.toWalletType === 'credit' ? -data.amountReceived : data.amountReceived)
 }
 
 export async function deleteTransfer(transfer: {
   id: string
   fromWalletId: string
   toWalletId: string
+  fromWalletType?: 'asset' | 'credit'
+  toWalletType?: 'asset' | 'credit'
   amountSent: number
   amountReceived: number
   commissionTransactionId: string | null
@@ -797,8 +805,8 @@ export async function deleteTransfer(transfer: {
     await deleteTransaction(transfer.commissionTransactionId)
   }
 
-  await adjustWalletBalance(transfer.fromWalletId, transfer.amountSent)
-  await adjustWalletBalance(transfer.toWalletId, -transfer.amountReceived)
+  await adjustWalletBalance(transfer.fromWalletId, transfer.fromWalletType === 'credit' ? -transfer.amountSent : transfer.amountSent)
+  await adjustWalletBalance(transfer.toWalletId, transfer.toWalletType === 'credit' ? transfer.amountReceived : -transfer.amountReceived)
 }
 
 export async function getLatestExchangeRate(

@@ -14,6 +14,7 @@ const WALLETS: Wallet[] = [
   { id: 'w1', userId: 'u1', name: 'Binance', currencyId: 'c1', type: 'asset', creditLimit: null, balance: 100, sortOrder: 1, notes: null, isActive: true, createdAt: '', updatedAt: '' },
   { id: 'w2', userId: 'u1', name: 'Zinli', currencyId: 'c2', type: 'asset', creditLimit: null, balance: 0, sortOrder: 2, notes: null, isActive: true, createdAt: '', updatedAt: '' },
   { id: 'w3', userId: 'u1', name: 'Banesco', currencyId: 'c3', type: 'asset', creditLimit: null, balance: 0, sortOrder: 3, notes: null, isActive: true, createdAt: '', updatedAt: '' },
+  { id: 'w4', userId: 'u1', name: 'Visa', currencyId: 'c1', type: 'credit', creditLimit: 500, balance: 50, sortOrder: 4, notes: null, isActive: true, createdAt: '', updatedAt: '' },
 ]
 
 function setup(onSubmit = vi.fn(), onCancel = vi.fn()) {
@@ -86,12 +87,26 @@ describe('TransferForm', () => {
       expect.objectContaining({
         fromWalletId: 'w1',
         toWalletId: 'w3',
+        fromWalletType: 'asset',
+        toWalletType: 'asset',
         fromCurrencyId: 'c1',
         toCurrencyId: 'c3',
         amountSent: 70,
         commission: 5,
         amountReceived: 2400,
       }),
+    )
+  })
+
+  it('includes the destination wallet type when transferring to a credit card', async () => {
+    const { onSubmit } = setup()
+    await userEvent.selectOptions(screen.getByLabelText(/origen/i), 'w1')
+    await userEvent.selectOptions(screen.getByLabelText(/destino/i), 'w4')
+    await userEvent.type(screen.getByLabelText(/monto enviado/i), '40')
+    await userEvent.click(screen.getByRole('button', { name: /transferir/i }))
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ fromWalletType: 'asset', toWalletType: 'credit' }),
     )
   })
 
