@@ -8,6 +8,8 @@ export interface TransferFormValues {
   date: string
   fromWalletId: string
   toWalletId: string
+  fromWalletType: 'asset' | 'credit'
+  toWalletType: 'asset' | 'credit'
   fromCurrencyId: string
   toCurrencyId: string
   amountSent: number
@@ -118,6 +120,8 @@ export function TransferForm({ wallets, currencies, onSubmit, onCancel, loading 
       date,
       fromWalletId,
       toWalletId,
+      fromWalletType: fromWallet.type,
+      toWalletType: toWallet.type,
       fromCurrencyId: fromWallet.currencyId,
       toCurrencyId: toWallet.currencyId,
       amountSent: sent,

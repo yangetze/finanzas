@@ -14,13 +14,17 @@ Por eso **no hace falta migración**: es un movimiento de saldo entre dos
 wallets (se resta de la TDC, se resta de la wallet de origen), no una fila
 nueva en ninguna tabla.
 
-## Bug relacionado encontrado (fuera de alcance, no se toca en este sprint)
-La feature de Transferencias ya permite elegir una wallet de crédito como
-destino, pero `createTransfer` hace `adjustWalletBalance(toWalletId,
-+amountReceived)` — sumar al balance de una TDC *aumentaría* la deuda en
-vez de reducirla si alguien la usara para "pagar" la tarjeta. No se corrige
-aquí porque son features separadas (transferencia entre wallets vs. pago de
-tarjeta) y el usuario no lo pidió; se deja anotado para un sprint aparte.
+## Bug relacionado encontrado (corregido en un commit aparte tras este sprint)
+La feature de Transferencias ya permitía elegir una wallet de crédito como
+destino, pero `createTransfer` hacía `adjustWalletBalance(toWalletId,
++amountReceived)` — sumar al balance de una TDC *aumentaba* la deuda en vez
+de reducirla si alguien la usaba para "pagar" la tarjeta (y el origen
+tenía el mismo problema simétrico: enviar desde una TDC debía aumentar la
+deuda, no reducirla). Corregido en `TransferForm`/`createTransfer`/
+`deleteTransfer` — el signo del ajuste ahora depende de si la wallet
+origen/destino es `credit`, verificado manualmente transfiriendo Bs hacia
+una TDC (el saldo usado bajó correctamente) y borrando la transferencia
+(reversión exacta de ambas wallets).
 
 ## Diseño
 - `PayCreditCardForm.tsx` (nuevo): recibe wallets tipo `asset` (excluye

@@ -89,6 +89,8 @@ export function WalletsPage() {
       id: transfer.id,
       fromWalletId: transfer.fromWalletId,
       toWalletId: transfer.toWalletId,
+      fromWalletType: getWallet(transfer.fromWalletId)?.type,
+      toWalletType: getWallet(transfer.toWalletId)?.type,
       amountSent: transfer.amountSent,
       amountReceived: transfer.amountReceived,
       commissionTransactionId: transfer.commissionTransactionId,
