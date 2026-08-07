@@ -88,7 +88,7 @@ describe('CasheaForm', () => {
     expect(txs[0].indexCurrencyId).toBeNull()
   })
 
-  it('marks every installment as indexed, with its index currency, when the toggle is on', async () => {
+  it('marks every installment as indexed, defaulting the index currency to its own currency, when the toggle is on', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(
@@ -108,18 +108,18 @@ describe('CasheaForm', () => {
 
     const txs = onSubmit.mock.calls[0][0]
     expect(txs.every((t: { isIndexed: boolean }) => t.isIndexed)).toBe(true)
-    expect(txs.every((t: { indexCurrencyId: string | null }) => t.indexCurrencyId === 'c2')).toBe(true)
-    expect(txs.every((t: { originCurrencyId: string }) => t.originCurrencyId === 'c3')).toBe(true)
+    expect(txs.every((t: { originCurrencyId: string }) => t.originCurrencyId === 'c1')).toBe(true)
+    expect(txs.every((t: { indexCurrencyId: string | null }) => t.indexCurrencyId === 'c1')).toBe(true)
   })
 
-  it('requires an index currency when indexed and none is available to pick', async () => {
+  it('lets the user pick a different index currency than the installment currency', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(
       <CasheaForm
         envelopes={[ENVELOPE]}
         wallets={[WALLET]}
-        currencies={[CURRENCY]}
+        currencies={MULTI_CURRENCIES}
         onSubmit={onSubmit}
         onCancel={vi.fn()}
       />,
@@ -127,11 +127,14 @@ describe('CasheaForm', () => {
     await user.type(screen.getByLabelText(/descripción/i), 'iPhone 15')
     await user.clear(screen.getByLabelText(/monto total/i))
     await user.type(screen.getByLabelText(/monto total/i), '90')
+    await user.selectOptions(screen.getByLabelText(/^moneda$/i), 'c3')
     await user.click(screen.getByRole('switch'))
+    await user.selectOptions(screen.getByLabelText(/moneda índice/i), 'c2')
     await user.click(screen.getByRole('button', { name: /guardar/i }))
 
-    expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByText(/moneda índice distinta/i)).toBeInTheDocument()
+    const txs = onSubmit.mock.calls[0][0]
+    expect(txs.every((t: { originCurrencyId: string }) => t.originCurrencyId === 'c3')).toBe(true)
+    expect(txs.every((t: { indexCurrencyId: string | null }) => t.indexCurrencyId === 'c2')).toBe(true)
   })
 
   it('calls onCancel when cancel clicked', async () => {

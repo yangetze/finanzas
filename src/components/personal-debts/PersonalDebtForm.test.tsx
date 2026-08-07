@@ -69,7 +69,7 @@ describe('PersonalDebtForm', () => {
     expect(screen.queryByLabelText(/moneda índice/i)).not.toBeInTheDocument()
   })
 
-  it('requires an index currency when indexed and none is available to pick', async () => {
+  it('defaults the index currency to the debt\'s own currency on first toggle (fixed-and-indexed-in-the-same-currency case)', async () => {
     const onSubmit = vi.fn()
     render(<PersonalDebtForm currencies={CURRENCIES} onSubmit={onSubmit} onCancel={vi.fn()} />)
 
@@ -78,37 +78,24 @@ describe('PersonalDebtForm', () => {
     await userEvent.click(screen.getByRole('switch'))
     await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
 
-    expect(onSubmit).not.toHaveBeenCalled()
-    expect(screen.getByText(/moneda índice distinta/i)).toBeInTheDocument()
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ isIndexed: true, currencyId: 'c1', indexCurrencyId: 'c1' }),
+    )
   })
 
-  it('lets the user override the suggested index currency', async () => {
+  it('lets the user override the suggested index currency with a different one', async () => {
     const onSubmit = vi.fn()
     render(<PersonalDebtForm currencies={MULTI_CURRENCIES} onSubmit={onSubmit} onCancel={vi.fn()} />)
 
     await userEvent.type(screen.getByLabelText(/descripción/i), 'Préstamo')
     await userEvent.type(screen.getByLabelText(/monto/i), '100')
     await userEvent.click(screen.getByRole('switch'))
-    // Suggested default is USD (c1); the user picks EUR (c3) instead.
+    // Suggested default is the debt's own currency (USD, c1); the user picks EUR (c3) instead.
     await userEvent.selectOptions(screen.getByLabelText(/moneda índice/i), 'c3')
     await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
 
     expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ isIndexed: true, currencyId: 'c2', indexCurrencyId: 'c3' }),
-    )
-  })
-
-  it('defaults the debt currency to VES and the index currency to USD on first toggle, for a new debt', async () => {
-    const onSubmit = vi.fn()
-    render(<PersonalDebtForm currencies={MULTI_CURRENCIES} onSubmit={onSubmit} onCancel={vi.fn()} />)
-
-    await userEvent.type(screen.getByLabelText(/descripción/i), 'Préstamo')
-    await userEvent.type(screen.getByLabelText(/monto/i), '100')
-    await userEvent.click(screen.getByRole('switch'))
-    await userEvent.click(screen.getByRole('button', { name: /guardar/i }))
-
-    expect(onSubmit).toHaveBeenCalledWith(
-      expect.objectContaining({ isIndexed: true, currencyId: 'c2', indexCurrencyId: 'c1' }),
+      expect.objectContaining({ isIndexed: true, currencyId: 'c1', indexCurrencyId: 'c3' }),
     )
   })
 
