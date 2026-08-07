@@ -49,6 +49,7 @@ const DEBT: PersonalDebt = {
   date: '2026-08-01',
   status: 'open',
   isIndexed: false,
+  indexCurrencyId: null,
   notes: null,
   createdAt: '2026-08-01',
   updatedAt: '2026-08-01',
@@ -161,6 +162,28 @@ describe('DebtorCard', () => {
       />,
     )
     expect(screen.getByText(/me debe \$2,00 usdc/i)).toBeInTheDocument()
+  })
+
+  it('keeps an indexed net total separate from usdcTotal, labeled with its index currency', () => {
+    const ves: Currency = { ...CURRENCY, id: 'ves', code: 'VES', symbol: 'Bs.', type: 'fiat' }
+    render(
+      <DebtorCard
+        debtor={DEBTOR}
+        debts={[]}
+        payments={[]}
+        netTotals={[
+          { currencyId: 'usdc', total: 10, isIndexed: false, indexCurrencyId: null },
+          { currencyId: 'ves', total: 5000, isIndexed: true, indexCurrencyId: 'usdc' },
+        ]}
+        currencies={[...CURRENCIES, ves]}
+        rates={[]}
+        wallets={[]}
+        {...noop}
+      />,
+    )
+    expect(screen.getByText(/me debe \$10,00/i)).toBeInTheDocument()
+    expect(screen.getByText(/me debe bs\.5\.000,00 ves/i)).toBeInTheDocument()
+    expect(screen.getByText(/indexado a usdc/i)).toBeInTheDocument()
   })
 
   it('hides debts until expanded', async () => {

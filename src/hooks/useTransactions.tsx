@@ -33,6 +33,7 @@ function mapTransaction(row: Record<string, unknown>): Transaction {
     baseAmount: row.base_amount as number,
     baseRate: row.base_rate as number | null,
     isIndexed: row.is_indexed as boolean,
+    indexCurrencyId: (row.index_currency_id as string | null) ?? null,
     budgetItemId: row.budget_item_id as string | null,
     installmentNumber: row.installment_number as number | null,
     installmentTotal: row.installment_total as number | null,

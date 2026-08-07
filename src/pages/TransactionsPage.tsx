@@ -294,11 +294,13 @@ export function TransactionsPage() {
             {filtered.map((tx, idx) => {
               const currency = getCurrency(tx.paymentCurrencyId)
               if (!currency) return null
+              const indexCurrency = tx.indexCurrencyId ? (getCurrency(tx.indexCurrencyId) ?? null) : null
               return (
                 <div key={tx.id} className={idx > 0 ? 'border-t border-border' : ''}>
                   <TransactionRow
                     transaction={tx}
                     currency={currency}
+                    indexCurrency={indexCurrency}
                     envelope={getEnvelope(tx.envelopeId)}
                     onEdit={handleEdit}
                     onMarkPaid={handleMarkPaid}

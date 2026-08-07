@@ -47,6 +47,7 @@ const TX: Transaction = {
   baseAmount: 15,
   baseRate: null,
   isIndexed: false,
+  indexCurrencyId: null,
   budgetItemId: null,
   installmentNumber: null,
   installmentTotal: null,
@@ -120,10 +121,27 @@ describe('TransactionRow', () => {
     expect(onMarkPaid).not.toHaveBeenCalled()
   })
 
-  it('shows an "Indexada" badge for indexed transactions', () => {
+  it('shows a plain "Indexada" badge for indexed transactions with no resolved index currency', () => {
     const tx = { ...TX, isIndexed: true }
     render(<TransactionRow transaction={tx} currency={CURRENCY} onEdit={noop} onMarkPaid={noop} onMarkPaidIndexed={noop} onDelete={noop} />)
-    expect(screen.getByText(/indexada/i)).toBeInTheDocument()
+    expect(screen.getByText('Indexada')).toBeInTheDocument()
+  })
+
+  it('shows which currency the transaction is indexed to when provided', () => {
+    const usd: Currency = { ...CURRENCY, id: 'usd', code: 'USD' }
+    const tx = { ...TX, isIndexed: true, indexCurrencyId: 'usd' }
+    render(
+      <TransactionRow
+        transaction={tx}
+        currency={CURRENCY}
+        indexCurrency={usd}
+        onEdit={noop}
+        onMarkPaid={noop}
+        onMarkPaidIndexed={noop}
+        onDelete={noop}
+      />,
+    )
+    expect(screen.getByText('Indexada a USD')).toBeInTheDocument()
   })
 
   it('calls onEdit when edit button clicked', async () => {
