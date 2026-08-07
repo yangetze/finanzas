@@ -93,6 +93,11 @@ export function AppShell() {
           ))}
         </nav>
         <div className="px-3 pb-4">
+          {user?.email && (
+            <div className="px-3 pb-2 text-xs text-ink-faint font-ui truncate" title={user.email}>
+              {user.email}
+            </div>
+          )}
           <button
             onClick={handleSignOut}
             className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-ink-muted hover:text-coral hover:bg-coral/10 transition-colors font-ui"
@@ -167,6 +172,11 @@ export function AppShell() {
                 <NavItem key={item.to} {...item} onClick={() => setMoreOpen(false)} />
               ))}
               <div className="border-t border-border mt-2 pt-2">
+                {user?.email && (
+                  <div className="px-3 pb-2 text-xs text-ink-faint font-ui truncate" title={user.email}>
+                    {user.email}
+                  </div>
+                )}
                 <button
                   onClick={handleSignOut}
                   className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-sm text-ink-muted hover:text-coral hover:bg-coral/10 transition-colors font-ui"
