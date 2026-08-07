@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { getLatestExchangeRate } from '@/lib/supabase'
-import { formatCurrency, calcBaseAmount } from '@/lib/utils'
+import { formatCurrencyWithCode, calcBaseAmount } from '@/lib/utils'
 import type { Wallet, Currency } from '@/types'
 
 interface PersonalDebtPaymentFormValues {
@@ -106,7 +106,7 @@ export function PersonalDebtPaymentForm({
     }
 
     if (debtAmount > outstanding) {
-      setError(`El monto no puede exceder el saldo pendiente (${formatCurrency(outstanding, currency.symbol)})`)
+      setError(`El monto no puede exceder el saldo pendiente (${formatCurrencyWithCode(outstanding, currency)})`)
       return
     }
 
@@ -130,7 +130,7 @@ export function PersonalDebtPaymentForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <p className="text-xs font-ui text-ink-faint">
-        Saldo pendiente: {formatCurrency(outstanding, currency.symbol)}
+        Saldo pendiente: {formatCurrencyWithCode(outstanding, currency)}
       </p>
 
       <Select
@@ -168,7 +168,7 @@ export function PersonalDebtPaymentForm({
           </div>
           {rate !== '' && Number(rate) > 0 && paymentAmount !== '' && (
             <p className="text-xs font-ui text-ink-faint">
-              ≈ {formatCurrency(calcBaseAmount(Number(paymentAmount), Number(rate)), currency.symbol)}
+              ≈ {formatCurrencyWithCode(calcBaseAmount(Number(paymentAmount), Number(rate)), currency)}
             </p>
           )}
         </>

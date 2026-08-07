@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { PersonalDebtRow } from '@/components/personal-debts/PersonalDebtRow'
 import { outstandingAmount } from '@/lib/personalDebtTotals'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrencyWithCode } from '@/lib/utils'
 import type { CurrencyTotal } from '@/lib/budgetTotals'
 import type { Debtor, PersonalDebt, PersonalDebtPayment, Currency, Wallet } from '@/types'
 
@@ -75,7 +75,7 @@ export function DebtorCard({
                     key={currencyId}
                     className={`text-sm font-mono ${total > 0 ? 'text-sage' : 'text-coral'}`}
                   >
-                    {total > 0 ? 'Me debe' : 'Le debo'} {formatCurrency(Math.abs(total), currency.symbol)}
+                    {total > 0 ? 'Me debe' : 'Le debo'} {formatCurrencyWithCode(Math.abs(total), currency)}
                   </span>
                 )
               })}

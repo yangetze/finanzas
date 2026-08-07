@@ -60,7 +60,7 @@ describe('PersonalDebtOffsetForm', () => {
     await userEvent.selectOptions(screen.getByLabelText(/deuda que le debo/i), 'debt-a')
 
     expect(screen.getByText(/compensación/i)).toBeInTheDocument()
-    expect(screen.getByText('$4,00')).toBeInTheDocument()
+    expect(screen.getByText('$4,00 USD')).toBeInTheDocument()
   })
 
   it('shows validation error when no debts selected', async () => {
