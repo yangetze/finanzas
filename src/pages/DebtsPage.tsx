@@ -4,6 +4,7 @@ import { ArrowRight, Plus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useWallets, usePayCreditCardBalance } from '@/hooks/useWallets'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { useExchangeRates } from '@/hooks/useExchangeRates'
 import { useDebtors, useCreateDebtor, useUpdateDebtor, useDeactivateDebtor } from '@/hooks/useDebtors'
 import { usePersonalDebts, useCreatePersonalDebt, useDeletePersonalDebt } from '@/hooks/usePersonalDebts'
 import {
@@ -34,6 +35,7 @@ export function DebtsPage() {
 
   const { data: wallets, isLoading: walletsLoading } = useWallets(user?.id)
   const { data: currencies, isLoading: currenciesLoading } = useCurrencies()
+  const { data: rates } = useExchangeRates()
   const { data: debtors, isLoading: debtorsLoading } = useDebtors(user?.id)
   const { data: debts, isLoading: debtsLoading } = usePersonalDebts(user?.id)
   const { data: payments, isLoading: paymentsLoading } = usePersonalDebtPaymentsForUser(user?.id)
@@ -393,6 +395,7 @@ export function DebtsPage() {
                       payments={payments ?? []}
                       netTotals={netByDebtor(debtorDebts, payments ?? [])}
                       currencies={currencies ?? []}
+                      rates={rates ?? []}
                       wallets={wallets ?? []}
                       onEdit={(d) => {
                         setEditingDebtor(d)
