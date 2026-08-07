@@ -5,13 +5,16 @@ import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Toggle } from '@/components/ui/Toggle'
 import { Card } from '@/components/ui/Card'
+import { Tabs } from '@/components/ui/Tabs'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/components/ui/Toast'
 import { getCurrencies, updateUserProfile, signOut } from '@/lib/supabase'
+import { ExchangeRatesPage } from '@/pages/ExchangeRatesPage'
 
 export function SettingsPage() {
   const { user } = useAuth()
   const { showToast } = useToast()
+  const [activeTab, setActiveTab] = useState('general')
   const [name, setName] = useState('')
   const [baseCurrencyId, setBaseCurrencyId] = useState('')
   const [multiCurrency, setMultiCurrency] = useState(false)
@@ -59,66 +62,79 @@ export function SettingsPage() {
     await signOut()
   }
 
+  const tabs = [
+    { id: 'general', label: 'General' },
+    ...(user?.isAdmin ? [{ id: 'tasas', label: 'Tasas' }] : []),
+  ]
+
   return (
-    <div className="max-w-lg">
+    <div>
       <h1 className="text-2xl font-display italic text-gold mb-6">Configuración</h1>
 
-      <form onSubmit={handleSave} className="flex flex-col gap-4">
-        <Card>
-          <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
-            Tu perfil
-          </h2>
-          <div className="flex flex-col gap-4">
-            <Input
-              label="Nombre"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Opcional"
-            />
-            <Input
-              label="Correo electrónico"
-              value={user?.email ?? ''}
-              readOnly
-              disabled
-              helper="No se puede cambiar"
-            />
-          </div>
-        </Card>
+      {tabs.length > 1 && <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />}
 
-        <Card>
-          <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
-            Preferencias
-          </h2>
-          <div className="flex flex-col gap-4">
-            <Select
-              label="Moneda principal"
-              options={currencyOptions}
-              value={baseCurrencyId}
-              onChange={(e) => setBaseCurrencyId(e.target.value)}
-              placeholder="Selecciona una moneda"
-            />
-            <Toggle
-              checked={multiCurrency}
-              onChange={setMultiCurrency}
-              label="Múltiples monedas"
-              description="Actívalo si manejas más de una moneda"
-            />
-          </div>
-        </Card>
+      {activeTab === 'tasas' && user?.isAdmin ? (
+        <ExchangeRatesPage />
+      ) : (
+        <div className="max-w-lg">
+          <form onSubmit={handleSave} className="flex flex-col gap-4">
+            <Card>
+              <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
+                Tu perfil
+              </h2>
+              <div className="flex flex-col gap-4">
+                <Input
+                  label="Nombre"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Opcional"
+                />
+                <Input
+                  label="Correo electrónico"
+                  value={user?.email ?? ''}
+                  readOnly
+                  disabled
+                  helper="No se puede cambiar"
+                />
+              </div>
+            </Card>
 
-        <Button type="submit" loading={saving} className="w-full">
-          Guardar cambios
-        </Button>
-      </form>
+            <Card>
+              <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
+                Preferencias
+              </h2>
+              <div className="flex flex-col gap-4">
+                <Select
+                  label="Moneda principal"
+                  options={currencyOptions}
+                  value={baseCurrencyId}
+                  onChange={(e) => setBaseCurrencyId(e.target.value)}
+                  placeholder="Selecciona una moneda"
+                />
+                <Toggle
+                  checked={multiCurrency}
+                  onChange={setMultiCurrency}
+                  label="Múltiples monedas"
+                  description="Actívalo si manejas más de una moneda"
+                />
+              </div>
+            </Card>
 
-      <Card className="mt-6">
-        <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
-          Zona de peligro
-        </h2>
-        <Button variant="danger" onClick={handleSignOut} className="w-full">
-          Cerrar sesión
-        </Button>
-      </Card>
+            <Button type="submit" loading={saving} className="w-full">
+              Guardar cambios
+            </Button>
+          </form>
+
+          <Card className="mt-6">
+            <h2 className="text-sm font-semibold text-ink-muted font-ui uppercase tracking-wider mb-4">
+              Zona de peligro
+            </h2>
+            <Button variant="danger" onClick={handleSignOut} className="w-full">
+              Cerrar sesión
+            </Button>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
