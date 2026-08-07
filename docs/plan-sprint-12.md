@@ -109,6 +109,27 @@ y la tasa USDT, sin depender de que un admin entre a la app y pulse un botón.
   `002_demo_user.sql`) no permite login por password ni generar magic link
   localmente (`23505 duplicate key value... users_email_partial_key`) — no
   relacionado a este sprint, posible seguimiento aparte.
+- **`pg_net` no estaba habilitada en el proyecto remoto**: a diferencia del
+  stack local (donde viene por defecto), el proyecto real no tenía la
+  extensión, así que `023_sprint12_daily_rates_cron.sql` fallaba con
+  `schema "net" does not exist` al probarlo en producción. Se agregó
+  `024_sprint12_enable_pg_net.sql` para cubrir ese gap.
+
+## Deploy a producción (hecho en esta sesión, post-merge del PR aún pendiente)
+- Migraciones `022`, `023` y `024` aplicadas al proyecto remoto
+  (`aimhmbyfrxjamkehibup`) vía `apply_migration`
+- Edge Function `fetch-exchange-rates` desplegada vía `deploy_edge_function`
+  (`verify_jwt: true` — el cron ya manda un JWT válido de service-role)
+- Secreto `service_role_key` agregado a Vault por el usuario directamente en
+  el dashboard (no por mí — nunca debo manejar API keys/tokens en texto
+  plano, ni siquiera cuando el usuario lo pide explícitamente)
+- Verificado extremo a extremo: se disparó manualmente el mismo
+  `net.http_post` que ejecutará el cron — HTTP 200, ambos pares
+  (`USD→VES` BCV, `USDt→VES` USDT) quedaron escritos en `exchange_rates`
+  de la base real
+- `get_advisors` (security) revisado: no introduce alertas nuevas más allá
+  de las preexistentes del resto del esquema (lectura pública intencional
+  de `exchange_rates`, ya era así)
 
 ## Out of scope (futuro)
 - Histórico intradía de USDT (snapshots múltiples por día)
