@@ -1,4 +1,5 @@
 import type { CurrencyTotal } from './budgetTotals'
+import { isDollarEquivalent, convertToDollarGroup, type RateRow } from './emergencyFund'
 import type { PersonalDebt, PersonalDebtPayment, PersonalDebtStatus } from '@/types'
 
 export function outstandingAmount(debt: PersonalDebt, payments: PersonalDebtPayment[]): number {
@@ -26,6 +27,37 @@ export function netByDebtor(debts: PersonalDebt[], payments: PersonalDebtPayment
     else totals.push({ currencyId: debt.currencyId, total: signed })
   }
   return totals.filter((t) => t.total !== 0)
+}
+
+export interface NetTotalsInUsdcResult {
+  usdcTotal: number | null
+  unconverted: CurrencyTotal[]
+}
+
+// Combines every net total that can reach the USDC/USD "dollar group" (see
+// isDollarEquivalent) into a single usdcTotal, converting fiat currencies via
+// the latest stored admin rate. Currencies with no rate to bridge in are left
+// in `unconverted`, shown in their own currency as before.
+export function netTotalsInUsdc(
+  netTotals: CurrencyTotal[],
+  currencies: { id: string; type: string; code: string }[],
+  rates: RateRow[],
+): NetTotalsInUsdcResult {
+  const dollarGroupIds = new Set(currencies.filter(isDollarEquivalent).map((c) => c.id))
+
+  let usdcTotal: number | null = null
+  const unconverted: CurrencyTotal[] = []
+
+  for (const { currencyId, total } of netTotals) {
+    const converted = convertToDollarGroup(total, currencyId, dollarGroupIds, rates)
+    if (converted === null) {
+      unconverted.push({ currencyId, total })
+    } else {
+      usdcTotal = (usdcTotal ?? 0) + converted
+    }
+  }
+
+  return { usdcTotal, unconverted }
 }
 
 export interface OffsetResult {

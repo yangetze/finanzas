@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { outstandingAmount, netByDebtor, computeOffset, statusForOutstanding } from './personalDebtTotals'
+import {
+  outstandingAmount,
+  netByDebtor,
+  computeOffset,
+  statusForOutstanding,
+  netTotalsInUsdc,
+} from './personalDebtTotals'
 import type { PersonalDebt, PersonalDebtPayment } from '@/types'
 
 const debt = (overrides: Partial<PersonalDebt> = {}): PersonalDebt => ({
@@ -164,5 +170,58 @@ describe('computeOffset', () => {
     const debtA = debt({ id: 'debt-a', direction: 'i_owe_them', originalAmount: 5, currencyId: 'usd' })
     const debtB = debt({ id: 'debt-b', direction: 'they_owe_me', originalAmount: 4, currencyId: 've' })
     expect(() => computeOffset(debtA, debtB, [], [])).toThrow()
+  })
+})
+
+describe('netTotalsInUsdc', () => {
+  const currencies = [
+    { id: 'usdc', type: 'stable', code: 'USDC' },
+    { id: 'usdt', type: 'stable', code: 'USDt' },
+    { id: 'ves', type: 'fiat', code: 'VES' },
+    { id: 'eur', type: 'fiat', code: 'EUR' },
+  ]
+
+  it('sums stablecoin totals into usdcTotal with no rate needed', () => {
+    const result = netTotalsInUsdc(
+      [{ currencyId: 'usdc', total: 10 }, { currencyId: 'usdt', total: 5 }],
+      currencies,
+      [],
+    )
+    expect(result.usdcTotal).toBe(15)
+    expect(result.unconverted).toEqual([])
+  })
+
+  it('converts a fiat total using the latest stored rate', () => {
+    const rates = [{ fromCurrencyId: 'usdc', toCurrencyId: 'ves', rate: 200, rateDate: '2026-08-06' }]
+    const result = netTotalsInUsdc([{ currencyId: 'ves', total: 400 }], currencies, rates)
+    expect(result.usdcTotal).toBe(2)
+    expect(result.unconverted).toEqual([])
+  })
+
+  it('falls back to unconverted when no rate exists for that currency', () => {
+    const result = netTotalsInUsdc([{ currencyId: 'eur', total: 50 }], currencies, [])
+    expect(result.usdcTotal).toBeNull()
+    expect(result.unconverted).toEqual([{ currencyId: 'eur', total: 50 }])
+  })
+
+  it('mixes convertible and unconvertible currencies independently', () => {
+    const rates = [{ fromCurrencyId: 'usdc', toCurrencyId: 'ves', rate: 200, rateDate: '2026-08-06' }]
+    const result = netTotalsInUsdc(
+      [
+        { currencyId: 'usdc', total: 10 },
+        { currencyId: 'ves', total: 400 },
+        { currencyId: 'eur', total: 50 },
+      ],
+      currencies,
+      rates,
+    )
+    expect(result.usdcTotal).toBe(12)
+    expect(result.unconverted).toEqual([{ currencyId: 'eur', total: 50 }])
+  })
+
+  it('returns null usdcTotal when nothing is convertible', () => {
+    const result = netTotalsInUsdc([], currencies, [])
+    expect(result.usdcTotal).toBeNull()
+    expect(result.unconverted).toEqual([])
   })
 })

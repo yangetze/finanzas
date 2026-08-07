@@ -15,6 +15,19 @@ const CURRENCY: Currency = {
   createdAt: '2026-01-01',
 }
 
+const USDC: Currency = {
+  id: 'usdc',
+  code: 'USDC',
+  name: 'USD Coin',
+  symbol: '$',
+  type: 'stable',
+  isActive: true,
+  sortOrder: 0,
+  createdAt: '2026-01-01',
+}
+
+const CURRENCIES = [CURRENCY, USDC]
+
 const DEBTOR: Debtor = {
   id: 'd1',
   userId: 'u1',
@@ -59,7 +72,8 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
@@ -74,7 +88,8 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
@@ -89,7 +104,8 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[{ currencyId: 'c1', total: 4 }]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
@@ -104,12 +120,47 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[{ currencyId: 'c1', total: -1 }]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
     )
     expect(screen.getByText(/le debo \$1,00/i)).toBeInTheDocument()
+  })
+
+  it('shows the original currency when no rate exists to convert it to USDC', () => {
+    const ves: Currency = { ...CURRENCY, id: 'ves', code: 'VES', symbol: 'Bs.', type: 'fiat' }
+    render(
+      <DebtorCard
+        debtor={DEBTOR}
+        debts={[]}
+        payments={[]}
+        netTotals={[{ currencyId: 'ves', total: 400 }]}
+        currencies={[...CURRENCIES, ves]}
+        rates={[]}
+        wallets={[]}
+        {...noop}
+      />,
+    )
+    expect(screen.getByText(/me debe bs\.400,00 ves/i)).toBeInTheDocument()
+  })
+
+  it('converts a fiat total to USDC when a rate exists', () => {
+    const ves: Currency = { ...CURRENCY, id: 'ves', code: 'VES', symbol: 'Bs.', type: 'fiat' }
+    render(
+      <DebtorCard
+        debtor={DEBTOR}
+        debts={[]}
+        payments={[]}
+        netTotals={[{ currencyId: 'ves', total: 400 }]}
+        currencies={[...CURRENCIES, ves]}
+        rates={[{ fromCurrencyId: 'usdc', toCurrencyId: 'ves', rate: 200, rateDate: '2026-08-06' }]}
+        wallets={[]}
+        {...noop}
+      />,
+    )
+    expect(screen.getByText(/me debe \$2,00 usdc/i)).toBeInTheDocument()
   })
 
   it('hides debts until expanded', async () => {
@@ -119,7 +170,8 @@ describe('DebtorCard', () => {
         debts={[DEBT]}
         payments={[]}
         netTotals={[{ currencyId: 'c1', total: -5 }]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
@@ -138,7 +190,8 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
         onAddDebt={onAddDebt}
@@ -155,7 +208,8 @@ describe('DebtorCard', () => {
         debts={[DEBT]}
         payments={[]}
         netTotals={[{ currencyId: 'c1', total: -5 }]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
       />,
@@ -172,7 +226,8 @@ describe('DebtorCard', () => {
         debts={[DEBT, theyOweMeDebt]}
         payments={[]}
         netTotals={[{ currencyId: 'c1', total: -1 }]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
         onOffset={onOffset}
@@ -190,7 +245,8 @@ describe('DebtorCard', () => {
         debts={[]}
         payments={[]}
         netTotals={[]}
-        currencies={[CURRENCY]}
+        currencies={CURRENCIES}
+        rates={[]}
         wallets={[]}
         {...noop}
         onDeactivate={onDeactivate}

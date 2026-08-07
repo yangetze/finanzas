@@ -3,9 +3,10 @@ import { ChevronDown, ChevronUp, Pencil, Plus, PowerOff, Scale } from 'lucide-re
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { PersonalDebtRow } from '@/components/personal-debts/PersonalDebtRow'
-import { outstandingAmount } from '@/lib/personalDebtTotals'
+import { outstandingAmount, netTotalsInUsdc } from '@/lib/personalDebtTotals'
 import { formatCurrencyWithCode } from '@/lib/utils'
 import type { CurrencyTotal } from '@/lib/budgetTotals'
+import type { RateRow } from '@/lib/emergencyFund'
 import type { Debtor, PersonalDebt, PersonalDebtPayment, Currency, Wallet } from '@/types'
 
 interface DebtorCardProps {
@@ -14,6 +15,7 @@ interface DebtorCardProps {
   payments: PersonalDebtPayment[]
   netTotals: CurrencyTotal[]
   currencies: Currency[]
+  rates: RateRow[]
   wallets: Wallet[]
   onEdit: (debtor: Debtor) => void
   onDeactivate: (id: string) => void
@@ -30,6 +32,7 @@ export function DebtorCard({
   payments,
   netTotals,
   currencies,
+  rates,
   wallets,
   onEdit,
   onDeactivate,
@@ -44,6 +47,9 @@ export function DebtorCard({
   function currencyOf(currencyId: string) {
     return currencies.find((c) => c.id === currencyId)
   }
+
+  const usdcCurrency = currencies.find((c) => c.code === 'USDC')
+  const { usdcTotal, unconverted } = netTotalsInUsdc(netTotals, currencies, rates)
 
   const canOffset =
     debts.some((d) => d.direction === 'they_owe_me' && d.status !== 'paid') &&
@@ -67,7 +73,12 @@ export function DebtorCard({
             <p className="text-xs font-ui text-ink-faint">Sin saldo pendiente</p>
           ) : (
             <div className="flex items-center gap-2 flex-wrap">
-              {netTotals.map(({ currencyId, total }) => {
+              {usdcCurrency && usdcTotal !== null && usdcTotal !== 0 && (
+                <span className={`text-sm font-mono ${usdcTotal > 0 ? 'text-sage' : 'text-coral'}`}>
+                  {usdcTotal > 0 ? 'Me debe' : 'Le debo'} {formatCurrencyWithCode(Math.abs(usdcTotal), usdcCurrency)}
+                </span>
+              )}
+              {unconverted.map(({ currencyId, total }) => {
                 const currency = currencyOf(currencyId)
                 if (!currency) return null
                 return (
