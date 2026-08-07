@@ -74,7 +74,7 @@ describe('PersonalDebtRow', () => {
     )
     expect(screen.getByText('Cena del viernes')).toBeInTheDocument()
     expect(screen.getByText(/le debo/i)).toBeInTheDocument()
-    expect(screen.getByText('$1,00')).toBeInTheDocument()
+    expect(screen.getByText('$1,00 USD')).toBeInTheDocument()
   })
 
   it('hides payment history until expanded', async () => {

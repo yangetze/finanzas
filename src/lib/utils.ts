@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
+import type { Currency } from '@/types'
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
@@ -16,6 +17,18 @@ export function formatCurrency(
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   })}`
+}
+
+// Several currencies share the same symbol (USD, USDC, USDt, DOC all use
+// "$"), so amount-only formatting is ambiguous wherever more than one of
+// them can appear side by side (e.g. a debtor with debts in different
+// dollar-denominated currencies). Appends the currency code to disambiguate.
+export function formatCurrencyWithCode(
+  amount: number,
+  currency: Pick<Currency, 'symbol' | 'code'>,
+  decimals = 2,
+): string {
+  return `${formatCurrency(amount, currency.symbol, decimals)} ${currency.code}`
 }
 
 export function formatDate(dateStr: string): string {

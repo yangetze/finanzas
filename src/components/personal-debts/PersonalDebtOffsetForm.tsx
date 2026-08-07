@@ -3,7 +3,7 @@ import { Select } from '@/components/ui/Select'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { statusForOutstanding } from '@/lib/personalDebtTotals'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrencyWithCode } from '@/lib/utils'
 import type { Currency, PersonalDebt } from '@/types'
 
 type DebtWithOutstanding = PersonalDebt & { outstanding: number }
@@ -85,17 +85,23 @@ export function PersonalDebtOffsetForm({
 
   const theyOweMeOptions = [
     { value: '', label: 'Seleccione una deuda' },
-    ...theyOweMeDebts.map((d) => ({
-      value: d.id,
-      label: `${d.description} (${formatCurrency(d.outstanding, currencies.find((c) => c.id === d.currencyId)?.symbol ?? '')})`,
-    })),
+    ...theyOweMeDebts.map((d) => {
+      const c = currencies.find((c) => c.id === d.currencyId)
+      return {
+        value: d.id,
+        label: `${d.description} (${c ? formatCurrencyWithCode(d.outstanding, c) : ''})`,
+      }
+    }),
   ]
   const iOweThemOptions = [
     { value: '', label: 'Seleccione una deuda' },
-    ...iOweThemDebts.map((d) => ({
-      value: d.id,
-      label: `${d.description} (${formatCurrency(d.outstanding, currencies.find((c) => c.id === d.currencyId)?.symbol ?? '')})`,
-    })),
+    ...iOweThemDebts.map((d) => {
+      const c = currencies.find((c) => c.id === d.currencyId)
+      return {
+        value: d.id,
+        label: `${d.description} (${c ? formatCurrencyWithCode(d.outstanding, c) : ''})`,
+      }
+    }),
   ]
 
   return (
@@ -123,14 +129,14 @@ export function PersonalDebtOffsetForm({
       {preview && currency && (
         <div className="bg-canvas-muted rounded-lg p-3 flex flex-col gap-1.5 text-sm font-ui">
           <p className="text-ink-muted">
-            Compensación: <span className="font-mono text-ink">{formatCurrency(preview.offsetAmount, currency.symbol)}</span>
+            Compensación: <span className="font-mono text-ink">{formatCurrencyWithCode(preview.offsetAmount, currency)}</span>
           </p>
           <p className="text-ink-faint text-xs">
-            Me deben quedará en {formatCurrency(preview.theyOweMeRemaining, currency.symbol)} (
+            Me deben quedará en {formatCurrencyWithCode(preview.theyOweMeRemaining, currency)} (
             {preview.theyOweMeStatus})
           </p>
           <p className="text-ink-faint text-xs">
-            Le debo quedará en {formatCurrency(preview.iOweThemRemaining, currency.symbol)} (
+            Le debo quedará en {formatCurrencyWithCode(preview.iOweThemRemaining, currency)} (
             {preview.iOweThemStatus})
           </p>
         </div>

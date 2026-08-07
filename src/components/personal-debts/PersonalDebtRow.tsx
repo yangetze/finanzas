@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Plus, Trash2, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { formatCurrency, formatShortDate } from '@/lib/utils'
+import { formatCurrencyWithCode, formatShortDate } from '@/lib/utils'
 import type { PersonalDebt, PersonalDebtPayment, Currency, Wallet } from '@/types'
 
 const STATUS_LABEL: Record<PersonalDebt['status'], string> = {
@@ -75,10 +75,10 @@ export function PersonalDebtRow({
         </div>
 
         <div className="text-right shrink-0">
-          <span className="block text-sm font-mono text-ink">{formatCurrency(outstanding, currency.symbol)}</span>
+          <span className="block text-sm font-mono text-ink">{formatCurrencyWithCode(outstanding, currency)}</span>
           {outstanding !== debt.originalAmount && (
             <span className="block text-xs font-mono text-ink-faint">
-              de {formatCurrency(debt.originalAmount, currency.symbol)}
+              de {formatCurrencyWithCode(debt.originalAmount, currency)}
             </span>
           )}
         </div>
@@ -107,7 +107,7 @@ export function PersonalDebtRow({
                   {payment.paymentType === 'offset' ? 'Compensación' : walletName(payment.walletId)}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-ink">{formatCurrency(payment.amount, currency.symbol)}</span>
+                  <span className="font-mono text-ink">{formatCurrencyWithCode(payment.amount, currency)}</span>
                   <button
                     type="button"
                     aria-label="Eliminar pago"
