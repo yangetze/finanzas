@@ -3,9 +3,8 @@ import { ChevronDown, ChevronUp, Pencil, Plus, PowerOff, Scale } from 'lucide-re
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { PersonalDebtRow } from '@/components/personal-debts/PersonalDebtRow'
-import { outstandingAmount, netTotalsInUsdc } from '@/lib/personalDebtTotals'
+import { outstandingAmount, netTotalsInUsdc, type PersonalDebtCurrencyTotal } from '@/lib/personalDebtTotals'
 import { formatCurrencyWithCode } from '@/lib/utils'
-import type { CurrencyTotal } from '@/lib/budgetTotals'
 import type { RateRow } from '@/lib/emergencyFund'
 import type { Debtor, PersonalDebt, PersonalDebtPayment, Currency, Wallet } from '@/types'
 
@@ -13,7 +12,7 @@ interface DebtorCardProps {
   debtor: Debtor
   debts: PersonalDebt[]
   payments: PersonalDebtPayment[]
-  netTotals: CurrencyTotal[]
+  netTotals: PersonalDebtCurrencyTotal[]
   currencies: Currency[]
   rates: RateRow[]
   wallets: Wallet[]
@@ -49,7 +48,7 @@ export function DebtorCard({
   }
 
   const usdcCurrency = currencies.find((c) => c.code === 'USDC')
-  const { usdcTotal, unconverted } = netTotalsInUsdc(netTotals, currencies, rates)
+  const { usdcTotal, unconverted, indexed } = netTotalsInUsdc(netTotals, currencies, rates)
 
   const canOffset =
     debts.some((d) => d.direction === 'they_owe_me' && d.status !== 'paid') &&
@@ -90,6 +89,22 @@ export function DebtorCard({
                   </span>
                 )
               })}
+              {indexed.map(({ currencyId, total, indexCurrencyId }, idx) => {
+                const currency = currencyOf(currencyId)
+                const indexCurrency = currencyOf(indexCurrencyId)
+                if (!currency) return null
+                return (
+                  <span
+                    key={`indexed-${currencyId}-${idx}`}
+                    className={`text-sm font-mono ${total > 0 ? 'text-sage' : 'text-coral'}`}
+                  >
+                    {total > 0 ? 'Me debe' : 'Le debo'} {formatCurrencyWithCode(Math.abs(total), currency)}
+                    {indexCurrency && (
+                      <span className="text-xs text-ink-faint"> (indexado a {indexCurrency.code})</span>
+                    )}
+                  </span>
+                )
+              })}
             </div>
           )}
         </div>
@@ -120,12 +135,14 @@ export function DebtorCard({
             debts.map((debt, idx) => {
               const currency = currencyOf(debt.currencyId)
               if (!currency) return null
+              const indexCurrency = debt.indexCurrencyId ? currencyOf(debt.indexCurrencyId) : null
               const debtPayments = payments.filter((p) => p.personalDebtId === debt.id)
               return (
                 <div key={debt.id} className={idx > 0 ? 'border-t border-border' : ''}>
                   <PersonalDebtRow
                     debt={debt}
                     currency={currency}
+                    indexCurrency={indexCurrency}
                     outstanding={outstandingAmount(debt, debtPayments)}
                     payments={debtPayments}
                     wallets={wallets}

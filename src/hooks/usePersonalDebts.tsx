@@ -14,6 +14,7 @@ function mapPersonalDebt(row: Record<string, unknown>): PersonalDebt {
     date: row.date as string,
     status: row.status as PersonalDebt['status'],
     isIndexed: row.is_indexed as boolean,
+    indexCurrencyId: (row.index_currency_id as string | null) ?? null,
     notes: row.notes as string | null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,

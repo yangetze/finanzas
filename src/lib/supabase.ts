@@ -905,6 +905,7 @@ export async function createPersonalDebt(data: {
   originalAmount: number
   date: string
   isIndexed?: boolean
+  indexCurrencyId?: string | null
   notes?: string | null
 }) {
   const { error } = await supabase.from('personal_debts').insert({
@@ -917,6 +918,7 @@ export async function createPersonalDebt(data: {
     date: data.date,
     status: 'open',
     is_indexed: data.isIndexed ?? false,
+    index_currency_id: data.indexCurrencyId ?? null,
     notes: data.notes ?? null,
   })
   if (error) throw error
@@ -931,6 +933,7 @@ export async function updatePersonalDebt(
     originalAmount: number
     date: string
     isIndexed: boolean
+    indexCurrencyId: string | null
     notes: string | null
   }>,
 ) {
@@ -941,6 +944,7 @@ export async function updatePersonalDebt(
   if (data.originalAmount !== undefined) updates.original_amount = data.originalAmount
   if (data.date !== undefined) updates.date = data.date
   if (data.isIndexed !== undefined) updates.is_indexed = data.isIndexed
+  if (data.indexCurrencyId !== undefined) updates.index_currency_id = data.indexCurrencyId
   if (data.notes !== undefined) updates.notes = data.notes
 
   const { error } = await supabase.from('personal_debts').update(updates).eq('id', id)

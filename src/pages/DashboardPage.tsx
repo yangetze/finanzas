@@ -260,9 +260,11 @@ export function DashboardPage() {
               {oweMeTotals.map((t) => {
                 const currency = getCurrency(t.currencyId)
                 if (!currency) return null
+                const indexCurrency = t.indexCurrencyId ? getCurrency(t.indexCurrencyId) : null
                 return (
-                  <span key={t.currencyId} className="text-lg font-mono font-semibold text-sage">
+                  <span key={`${t.currencyId}-${t.isIndexed ?? false}`} className="text-lg font-mono font-semibold text-sage">
                     {formatCurrencyWithCode(t.total, currency)}
+                    {indexCurrency && <span className="text-xs text-ink-faint"> (indexado a {indexCurrency.code})</span>}
                   </span>
                 )
               })}
@@ -273,9 +275,11 @@ export function DashboardPage() {
               {iOweTotals.map((t) => {
                 const currency = getCurrency(t.currencyId)
                 if (!currency) return null
+                const indexCurrency = t.indexCurrencyId ? getCurrency(t.indexCurrencyId) : null
                 return (
-                  <span key={t.currencyId} className="text-lg font-mono font-semibold text-coral">
+                  <span key={`${t.currencyId}-${t.isIndexed ?? false}`} className="text-lg font-mono font-semibold text-coral">
                     {formatCurrencyWithCode(t.total, currency)}
+                    {indexCurrency && <span className="text-xs text-ink-faint"> (indexado a {indexCurrency.code})</span>}
                   </span>
                 )
               })}

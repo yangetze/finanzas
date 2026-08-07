@@ -19,6 +19,7 @@ const STATUS_COLOR: Record<PersonalDebt['status'], string> = {
 interface PersonalDebtRowProps {
   debt: PersonalDebt
   currency: Currency
+  indexCurrency?: Currency | null
   outstanding: number
   payments: PersonalDebtPayment[]
   wallets: Wallet[]
@@ -30,6 +31,7 @@ interface PersonalDebtRowProps {
 export function PersonalDebtRow({
   debt,
   currency,
+  indexCurrency,
   outstanding,
   payments,
   wallets,
@@ -67,7 +69,7 @@ export function PersonalDebtRow({
             </span>
             {debt.isIndexed && (
               <span className="text-xs font-ui px-1.5 py-0.5 rounded text-amber-fin bg-amber-fin/15">
-                Indexada
+                {indexCurrency ? `Indexada a ${indexCurrency.code}` : 'Indexada'}
               </span>
             )}
           </div>

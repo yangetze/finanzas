@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Toggle } from '@/components/ui/Toggle'
@@ -12,6 +12,7 @@ interface PersonalDebtFormValues {
   originalAmount: number
   date: string
   isIndexed: boolean
+  indexCurrencyId: string | null
   notes: string | null
 }
 
@@ -22,6 +23,7 @@ interface PersonalDebtFormInitial {
   originalAmount: number
   date: string
   isIndexed: boolean
+  indexCurrencyId: string | null
   notes: string | null
 }
 
@@ -51,8 +53,26 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
   )
   const [date, setDate] = useState(initialValues?.date ?? today())
   const [isIndexed, setIsIndexed] = useState(initialValues?.isIndexed ?? false)
+  const [indexCurrencyId, setIndexCurrencyId] = useState(initialValues?.indexCurrencyId ?? '')
   const [notes, setNotes] = useState(initialValues?.notes ?? '')
   const [error, setError] = useState('')
+
+  // First time a new debt (no initialValues) is marked as indexed, assist
+  // with the Venezuela-first defaults: the debt itself in VES, indexed to
+  // USD — both still changeable via their selects.
+  useEffect(() => {
+    if (!isIndexed || initialValues || indexCurrencyId) return
+    const ves = currencies.find((c) => c.code === 'VES')
+    if (ves && currencyId !== ves.id) setCurrencyId(ves.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndexed])
+
+  useEffect(() => {
+    if (!isIndexed || initialValues || indexCurrencyId) return
+    const usd = currencies.find((c) => c.code === 'USD')
+    if (usd && usd.id !== currencyId) setIndexCurrencyId(usd.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndexed, currencyId])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -65,6 +85,10 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
       setError('El monto debe ser mayor a cero')
       return
     }
+    if (isIndexed && (!indexCurrencyId || indexCurrencyId === currencyId)) {
+      setError('Debe seleccionar una moneda índice distinta a la moneda de la deuda')
+      return
+    }
     setError('')
     onSubmit({
       direction,
@@ -73,11 +97,15 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
       originalAmount: amount,
       date,
       isIndexed,
+      indexCurrencyId: isIndexed ? indexCurrencyId : null,
       notes: notes.trim() || null,
     })
   }
 
   const currencyOptions = currencies.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
+  const indexCurrencyOptions = currencies
+    .filter((c) => c.id !== currencyId)
+    .map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -123,8 +151,19 @@ export function PersonalDebtForm({ currencies, initialValues, onSubmit, onCancel
         checked={isIndexed}
         onChange={setIsIndexed}
         label="Deuda indexada"
-        description="El monto queda anclado a esta moneda, pero se puede pagar en otra a la tasa del día"
+        description="El saldo se registra en la moneda de arriba, pero mantiene su valor frente a otra moneda de referencia"
       />
+
+      {isIndexed && (
+        <Select
+          label="Moneda índice"
+          helper="Moneda de referencia a la que esta deuda mantiene su valor (ej. USD)"
+          options={indexCurrencyOptions}
+          value={indexCurrencyId}
+          onChange={(e) => setIndexCurrencyId(e.target.value)}
+          placeholder="Seleccione una moneda"
+        />
+      )}
 
       <Input
         label="Notas"

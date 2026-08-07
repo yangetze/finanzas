@@ -19,6 +19,7 @@ const debt = (overrides: Partial<PersonalDebt> = {}): PersonalDebt => ({
   date: '2026-08-01',
   status: 'open',
   isIndexed: false,
+  indexCurrencyId: null,
   notes: null,
   createdAt: '2026-08-01',
   updatedAt: '2026-08-01',

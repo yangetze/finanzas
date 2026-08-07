@@ -110,6 +110,7 @@ export function DebtsPage() {
     originalAmount: number
     date: string
     isIndexed: boolean
+    indexCurrencyId: string | null
     notes: string | null
   }) {
     if (!debtorForDebt) return

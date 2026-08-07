@@ -43,6 +43,7 @@ const DEBT: PersonalDebt = {
   date: '2026-08-01',
   status: 'partial',
   isIndexed: false,
+  indexCurrencyId: null,
   notes: null,
   createdAt: '2026-08-01',
   updatedAt: '2026-08-01',
@@ -140,6 +141,36 @@ describe('PersonalDebtRow', () => {
       />,
     )
     expect(screen.queryByLabelText(/agregar pago/i)).not.toBeInTheDocument()
+  })
+
+  it('shows which currency the debt is indexed to when provided', () => {
+    const usd: Currency = { ...CURRENCY, id: 'usd', code: 'USD' }
+    render(
+      <PersonalDebtRow
+        debt={{ ...DEBT, isIndexed: true, indexCurrencyId: 'usd' }}
+        currency={CURRENCY}
+        indexCurrency={usd}
+        outstanding={1}
+        payments={[]}
+        wallets={WALLETS}
+        {...noop}
+      />,
+    )
+    expect(screen.getByText('Indexada a USD')).toBeInTheDocument()
+  })
+
+  it('falls back to a plain "Indexada" badge when the index currency is not resolved', () => {
+    render(
+      <PersonalDebtRow
+        debt={{ ...DEBT, isIndexed: true, indexCurrencyId: 'usd' }}
+        currency={CURRENCY}
+        outstanding={1}
+        payments={[]}
+        wallets={WALLETS}
+        {...noop}
+      />,
+    )
+    expect(screen.getByText('Indexada')).toBeInTheDocument()
   })
 
   it('calls onDelete when the delete button is clicked', async () => {

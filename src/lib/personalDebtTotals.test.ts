@@ -19,6 +19,7 @@ const debt = (overrides: Partial<PersonalDebt> = {}): PersonalDebt => ({
   date: '2026-08-01',
   status: 'open',
   isIndexed: false,
+  indexCurrencyId: null,
   notes: null,
   createdAt: '2026-08-01',
   updatedAt: '2026-08-01',
@@ -75,28 +76,48 @@ describe('netByDebtor', () => {
   it('nets they_owe_me minus i_owe_them per currency (guiding example)', () => {
     const debtA = debt({ id: 'debt-a', direction: 'i_owe_them', originalAmount: 5, currencyId: 'usd' })
     const debtB = debt({ id: 'debt-b', direction: 'they_owe_me', originalAmount: 4, currencyId: 'usd' })
-    expect(netByDebtor([debtA, debtB], [])).toEqual([{ currencyId: 'usd', total: -1 }])
+    expect(netByDebtor([debtA, debtB], [])).toEqual([
+      { currencyId: 'usd', total: -1, isIndexed: false, indexCurrencyId: null },
+    ])
   })
 
   it('keeps totals separate per currency', () => {
     const debtA = debt({ id: 'debt-a', direction: 'they_owe_me', originalAmount: 10, currencyId: 'usd' })
     const debtB = debt({ id: 'debt-b', direction: 'i_owe_them', originalAmount: 3000, currencyId: 'ves' })
     expect(netByDebtor([debtA, debtB], [])).toEqual([
-      { currencyId: 'usd', total: 10 },
-      { currencyId: 'ves', total: -3000 },
+      { currencyId: 'usd', total: 10, isIndexed: false, indexCurrencyId: null },
+      { currencyId: 'ves', total: -3000, isIndexed: false, indexCurrencyId: null },
     ])
   })
 
   it('reflects payments already made', () => {
     const debtA = debt({ id: 'debt-a', direction: 'they_owe_me', originalAmount: 10, currencyId: 'usd' })
     const payments = [payment({ personalDebtId: 'debt-a', amount: 6 })]
-    expect(netByDebtor([debtA], payments)).toEqual([{ currencyId: 'usd', total: 4 }])
+    expect(netByDebtor([debtA], payments)).toEqual([
+      { currencyId: 'usd', total: 4, isIndexed: false, indexCurrencyId: null },
+    ])
   })
 
   it('excludes currencies fully settled (outstanding zero on both sides)', () => {
     const debtA = debt({ id: 'debt-a', direction: 'they_owe_me', originalAmount: 4, currencyId: 'usd' })
     const payments = [payment({ personalDebtId: 'debt-a', amount: 4 })]
     expect(netByDebtor([debtA], payments)).toEqual([])
+  })
+
+  it('keeps an indexed debt in its own bucket, separate from a non-indexed debt in the same currency', () => {
+    const debtA = debt({ id: 'debt-a', direction: 'they_owe_me', originalAmount: 5, currencyId: 've' })
+    const debtB = debt({
+      id: 'debt-b',
+      direction: 'they_owe_me',
+      originalAmount: 3000,
+      currencyId: 've',
+      isIndexed: true,
+      indexCurrencyId: 'usdc',
+    })
+    expect(netByDebtor([debtA, debtB], [])).toEqual([
+      { currencyId: 've', total: 5, isIndexed: false, indexCurrencyId: null },
+      { currencyId: 've', total: 3000, isIndexed: true, indexCurrencyId: 'usdc' },
+    ])
   })
 })
 
@@ -223,5 +244,20 @@ describe('netTotalsInUsdc', () => {
     const result = netTotalsInUsdc([], currencies, [])
     expect(result.usdcTotal).toBeNull()
     expect(result.unconverted).toEqual([])
+    expect(result.indexed).toEqual([])
+  })
+
+  it('keeps an indexed total out of usdcTotal even when its currency is USDC/USD, instead of merging it with real holdings', () => {
+    const result = netTotalsInUsdc(
+      [
+        { currencyId: 'usdc', total: 10, isIndexed: false, indexCurrencyId: null },
+        { currencyId: 'ves', total: 5000, isIndexed: true, indexCurrencyId: 'usdc' },
+      ],
+      currencies,
+      [],
+    )
+    expect(result.usdcTotal).toBe(10)
+    expect(result.unconverted).toEqual([])
+    expect(result.indexed).toEqual([{ currencyId: 'ves', total: 5000, indexCurrencyId: 'usdc' }])
   })
 })
