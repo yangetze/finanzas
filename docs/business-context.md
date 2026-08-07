@@ -310,9 +310,15 @@ For VES payments, this IS the bolívar amount. No separate VES field needed.
 Reporting "total VES spent this year" = filter transactions where payment_currency = VES, sum payment_amount.
 
 **Exchange rate selection when registering a transaction:**
-- Option A: Pick from saved rates (pre-loaded from BCV or entered manually)
-- Option B: Enter a custom rate just for this transaction (not saved)
+- Option A: Pick from saved rates (pre-loaded from BCV or USDT, one row per
+  day per pair — auto-refreshed daily by a cron job, admin can also refresh
+  manually from `/tasas`)
+- Option B: Enter a custom rate just for this transaction (not saved back to
+  the shared rate table)
 This respects the reality that rates change multiple times per day.
+Saved rates (`exchange_rates`) are transversal across all users and
+admin-managed only (sprint 12) — regular users can only read them, never
+write, since a wrong shared rate would affect everyone.
 
 ---
 

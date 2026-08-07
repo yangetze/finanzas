@@ -69,6 +69,26 @@ See `docs/business-context.md` for full product context.
 - **Auth**: never `await` a Supabase call inside `onAuthStateChange` — supabase-js
   holds its auth lock during dispatch and the app deadlocks (frozen spinner on tab
   refocus). Defer to a macrotask; skip profile refetch when the same user is loaded
+- **Tasas de cambio** (`/tasas`, admin-only): `exchange_rates` is transversal
+  (no `user_id`) — one shared rate per currency pair per day, not per user.
+  Writes (insert/update/delete) are restricted by RLS to `users.is_admin`;
+  reads stay open to any authenticated user. The route is guarded client-side
+  with `AdminRoute` (`components/layout/`) in addition to RLS — RLS is what
+  actually enforces it. Regular users never write to this table: modules that
+  need a rate (Transferencias, pago de TDC, Cashea/deudas indexadas) only
+  *read* the latest one via `getLatestExchangeRate` and let the user override
+  the value used for that one transaction, without touching `exchange_rates`.
+  Two sources feed it: BCV (`lib/bcv.ts`, `ve.dolarapi.com`, field is
+  `fechaActualizacion` not `fecha`) and USDT (`lib/usdt.ts`, CriptoYa Binance
+  P2P, `rate = (ask + bid) / 2`). Each source has one row per day — a same-day
+  refetch `upsert`s and overwrites it (no intraday history kept). A daily cron
+  (`pg_cron` + `pg_net`, migration `023_sprint12_daily_rates_cron.sql`) calls
+  the `fetch-exchange-rates` Edge Function, which uses its auto-injected
+  service-role key to bypass RLS and load both rates automatically; the admin
+  UI buttons in `ExchangeRatesPage` do the same fetches manually as a
+  fallback. The cron's Authorization header is a service-role JWT read from
+  Supabase Vault (secret name `service_role_key`) — that secret is never
+  committed and must exist in the project's Vault for the cron to succeed
 
 ## Testing (TDD)
 Write the test FIRST. Watch it fail. Then implement.
@@ -118,7 +138,7 @@ chore: move legacy files to /legacy folder
 src/
   components/
     ui/            ← Button, Input, Modal, Badge, Card, ProgressBar
-    layout/        ← AppShell, Sidebar, MobileNav, Header
+    layout/        ← AppShell, Sidebar, MobileNav, Header, AdminRoute
     envelopes/     ← EnvelopeCard, EnvelopeGroup, SubEnvelope
     transactions/  ← TransactionRow/Form, IncomeRow/Form, CasheaForm
     budget/        ← BudgetItemRow, BudgetForm, MonthOpener
@@ -132,9 +152,13 @@ src/
     budgetTotals.ts← sumByCurrency, isMissingRateForSingleCurrencySum
     stampMonth.ts  ← buildStampedTransactions, buildAllocations (Abrir mes)
     utils.ts       ← formatCurrency, formatDate, calcBaseAmount
+    bcv.ts / usdt.ts ← manual + cron rate fetchers (BCV, USDT)
   pages/
   types/
     index.ts       ← All TypeScript interfaces
+supabase/
+  functions/
+    fetch-exchange-rates/ ← daily cron target; upserts BCV + USDT via service-role client
 ```
 
 ## Design Tokens (Tailwind)
