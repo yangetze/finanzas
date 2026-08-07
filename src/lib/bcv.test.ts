@@ -13,7 +13,8 @@ describe('fetchBcvRate', () => {
   it('returns parsed rate and date on success', async () => {
     mockFetch.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ promedio: 55.20, fecha: '2026-06-29' }),
+      json: () =>
+        Promise.resolve({ promedio: 55.20, fechaActualizacion: '2026-06-29T00:00:00-04:00' }),
     })
 
     const result = await fetchBcvRate()
