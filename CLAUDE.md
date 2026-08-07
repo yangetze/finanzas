@@ -69,12 +69,16 @@ See `docs/business-context.md` for full product context.
 - **Auth**: never `await` a Supabase call inside `onAuthStateChange` — supabase-js
   holds its auth lock during dispatch and the app deadlocks (frozen spinner on tab
   refocus). Defer to a macrotask; skip profile refetch when the same user is loaded
-- **Tasas de cambio** (`/tasas`, admin-only): `exchange_rates` is transversal
-  (no `user_id`) — one shared rate per currency pair per day, not per user.
-  Writes (insert/update/delete) are restricted by RLS to `users.is_admin`;
-  reads stay open to any authenticated user. The route is guarded client-side
-  with `AdminRoute` (`components/layout/`) in addition to RLS — RLS is what
-  actually enforces it. Regular users never write to this table: modules that
+- **Tasas de cambio** (`/configuracion`, "Tasas" tab, admin-only): `exchange_rates`
+  is transversal (no `user_id`) — one shared rate per currency pair per day, not
+  per user. Writes (insert/update/delete) are restricted by RLS to `users.is_admin`;
+  reads stay open to any authenticated user. `ExchangeRatesPage` lives inside
+  `SettingsPage` as a tab (via the generic `Tabs` component in `components/ui/`)
+  rather than its own nav item/route — the tab itself is only rendered when
+  `user.isAdmin`, mirroring what RLS enforces server-side. `AdminRoute`
+  (`components/layout/`) still exists as a reusable route guard for any future
+  admin-only page, but nothing currently routes through it. Regular users never
+  write to this table: modules that
   need a rate (Transferencias, pago de TDC, Cashea/deudas indexadas) only
   *read* the latest one via `getLatestExchangeRate` and let the user override
   the value used for that one transaction, without touching `exchange_rates`.
