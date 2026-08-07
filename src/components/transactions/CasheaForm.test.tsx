@@ -9,6 +9,10 @@ const CURRENCY: Currency = {
   type: 'stable', isActive: true, sortOrder: 1, createdAt: '2026-01-01',
 }
 
+const USD: Currency = { id: 'c2', code: 'USD', name: 'US Dollar', symbol: '$', type: 'fiat', isActive: true, sortOrder: 2, createdAt: '2026-01-01' }
+const VES: Currency = { id: 'c3', code: 'VES', name: 'Bolívar', symbol: 'Bs.', type: 'fiat', isActive: true, sortOrder: 3, createdAt: '2026-01-01' }
+const MULTI_CURRENCIES = [CURRENCY, USD, VES]
+
 const ENVELOPE: Envelope = {
   id: 'e1', userId: 'u1', parentId: null, name: 'Ropa',
   spendCategory: null, isSavings: false, targetAmount: null, isEmergencyFund: false, countsAsInvestment: false, emoji: '👔', isActive: true, sortOrder: 1,
@@ -81,9 +85,34 @@ describe('CasheaForm', () => {
     // each installment = 90/3 = 30
     expect(txs[0].paymentAmount).toBeCloseTo(30)
     expect(txs[0].isIndexed).toBe(false)
+    expect(txs[0].indexCurrencyId).toBeNull()
   })
 
-  it('marks every installment as indexed when the toggle is on', async () => {
+  it('marks every installment as indexed, with its index currency, when the toggle is on', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
+      <CasheaForm
+        envelopes={[ENVELOPE]}
+        wallets={[WALLET]}
+        currencies={MULTI_CURRENCIES}
+        onSubmit={onSubmit}
+        onCancel={vi.fn()}
+      />,
+    )
+    await user.type(screen.getByLabelText(/descripción/i), 'iPhone 15')
+    await user.clear(screen.getByLabelText(/monto total/i))
+    await user.type(screen.getByLabelText(/monto total/i), '90')
+    await user.click(screen.getByRole('switch'))
+    await user.click(screen.getByRole('button', { name: /guardar/i }))
+
+    const txs = onSubmit.mock.calls[0][0]
+    expect(txs.every((t: { isIndexed: boolean }) => t.isIndexed)).toBe(true)
+    expect(txs.every((t: { indexCurrencyId: string | null }) => t.indexCurrencyId === 'c2')).toBe(true)
+    expect(txs.every((t: { originCurrencyId: string }) => t.originCurrencyId === 'c3')).toBe(true)
+  })
+
+  it('requires an index currency when indexed and none is available to pick', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(
@@ -101,8 +130,8 @@ describe('CasheaForm', () => {
     await user.click(screen.getByRole('switch'))
     await user.click(screen.getByRole('button', { name: /guardar/i }))
 
-    const txs = onSubmit.mock.calls[0][0]
-    expect(txs.every((t: { isIndexed: boolean }) => t.isIndexed)).toBe(true)
+    expect(onSubmit).not.toHaveBeenCalled()
+    expect(screen.getByText(/moneda índice distinta/i)).toBeInTheDocument()
   })
 
   it('calls onCancel when cancel clicked', async () => {

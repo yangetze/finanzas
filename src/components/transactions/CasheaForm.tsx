@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Toggle } from '@/components/ui/Toggle'
@@ -23,6 +23,7 @@ interface CasheaTransaction {
   baseAmount: number
   baseRate: null
   isIndexed: boolean
+  indexCurrencyId: string | null
   installmentNumber: number
   installmentTotal: number
   groupId: string
@@ -62,8 +63,27 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
   const [walletId, setWalletId] = useState(NONE)
   const [currencyId, setCurrencyId] = useState(currencies[0]?.id ?? '')
   const [isIndexed, setIsIndexed] = useState(false)
+  const [indexCurrencyId, setIndexCurrencyId] = useState('')
   const [notes, setNotes] = useState('')
   const [descError, setDescError] = useState('')
+  const [indexError, setIndexError] = useState('')
+
+  // First time the purchase is marked as indexed, assist with the
+  // Venezuela-first defaults: the installment itself in VES, indexed to
+  // USD — both still changeable via their selects.
+  useEffect(() => {
+    if (!isIndexed || indexCurrencyId) return
+    const ves = currencies.find((c) => c.code === 'VES')
+    if (ves && currencyId !== ves.id) setCurrencyId(ves.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndexed])
+
+  useEffect(() => {
+    if (!isIndexed || indexCurrencyId) return
+    const usd = currencies.find((c) => c.code === 'USD')
+    if (usd && usd.id !== currencyId) setIndexCurrencyId(usd.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isIndexed, currencyId])
 
   const envelopeOptions = [
     { value: NONE, label: 'Sin sobre' },
@@ -74,6 +94,9 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
     ...wallets.map((w) => ({ value: w.id, label: w.name })),
   ]
   const currencyOptions = currencies.map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
+  const indexCurrencyOptions = currencies
+    .filter((c) => c.id !== currencyId)
+    .map((c) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -82,6 +105,11 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
       return
     }
     setDescError('')
+    if (isIndexed && (!indexCurrencyId || indexCurrencyId === currencyId)) {
+      setIndexError('Debe seleccionar una moneda índice distinta a la moneda de la compra')
+      return
+    }
+    setIndexError('')
     const n = Math.max(1, Math.min(60, parseInt(installments) || 1))
     const totalAmount = parseFloat(total) || 0
     const installmentAmount = Math.round((totalAmount / n) * 100) / 100
@@ -104,6 +132,7 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
       baseAmount: installmentAmount,
       baseRate: null,
       isIndexed,
+      indexCurrencyId: isIndexed ? indexCurrencyId : null,
       installmentNumber: i + 1,
       installmentTotal: n,
       groupId,
@@ -183,8 +212,20 @@ export function CasheaForm({ envelopes, wallets, currencies, onSubmit, onCancel,
         checked={isIndexed}
         onChange={setIsIndexed}
         label="Compra indexada"
-        description="El monto de cada cuota queda anclado a esta moneda, pero se puede pagar en otra a la tasa del día"
+        description="Cada cuota se registra en la moneda de arriba, pero mantiene su valor frente a otra moneda de referencia"
       />
+
+      {isIndexed && (
+        <Select
+          label="Moneda índice"
+          helper="Moneda de referencia a la que esta compra mantiene su valor (ej. USD)"
+          error={indexError}
+          options={indexCurrencyOptions}
+          value={indexCurrencyId}
+          onChange={(e) => setIndexCurrencyId(e.target.value)}
+          placeholder="Seleccione una moneda"
+        />
+      )}
 
       <Input
         label="Notas"

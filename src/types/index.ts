@@ -131,6 +131,7 @@ export interface Transaction {
   baseAmount: number
   baseRate: number | null
   isIndexed: boolean
+  indexCurrencyId: string | null
   installmentNumber: number | null
   installmentTotal: number | null
   budgetItemId: string | null

@@ -5,6 +5,7 @@ import type { Transaction, Currency, Envelope } from '@/types'
 interface TransactionRowProps {
   transaction: Transaction
   currency: Currency
+  indexCurrency?: Currency | null
   envelope?: Envelope
   onEdit: (tx: Transaction) => void
   onMarkPaid: (id: string) => void
@@ -22,6 +23,7 @@ const STATUS_LABELS: Record<Transaction['status'], string> = {
 export function TransactionRow({
   transaction: tx,
   currency,
+  indexCurrency,
   envelope,
   onEdit,
   onMarkPaid,
@@ -48,7 +50,7 @@ export function TransactionRow({
           </span>
           {tx.isIndexed && (
             <span className="text-xs font-ui px-1.5 py-0.5 rounded text-amber-fin bg-amber-fin/15">
-              Indexada
+              {indexCurrency ? `Indexada a ${indexCurrency.code}` : 'Indexada'}
             </span>
           )}
         </div>

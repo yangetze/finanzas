@@ -380,6 +380,7 @@ export async function createTransaction(data: {
   baseAmount: number
   baseRate?: number | null
   isIndexed?: boolean
+  indexCurrencyId?: string | null
   notes?: string | null
 }) {
   const { error } = await supabase.from('transactions').insert({
@@ -400,6 +401,7 @@ export async function createTransaction(data: {
     base_amount: data.baseAmount,
     base_rate: data.baseRate ?? null,
     is_indexed: data.isIndexed ?? false,
+    index_currency_id: data.indexCurrencyId ?? null,
     notes: data.notes ?? null,
     installment_number: null,
     installment_total: null,
@@ -427,6 +429,7 @@ export async function createTransactionsBatch(
     baseAmount: number
     baseRate?: number | null
     isIndexed?: boolean
+    indexCurrencyId?: string | null
     installmentNumber?: number | null
     installmentTotal?: number | null
     groupId?: string | null
@@ -451,6 +454,7 @@ export async function createTransactionsBatch(
     base_amount: t.baseAmount,
     base_rate: t.baseRate ?? null,
     is_indexed: t.isIndexed ?? false,
+    index_currency_id: t.indexCurrencyId ?? null,
     notes: t.notes ?? null,
     installment_number: t.installmentNumber ?? null,
     installment_total: t.installmentTotal ?? null,
@@ -479,6 +483,7 @@ export async function updateTransaction(
     baseAmount: number
     baseRate: number | null
     isIndexed: boolean
+    indexCurrencyId: string | null
     notes: string | null
   }>,
 ) {
@@ -499,6 +504,7 @@ export async function updateTransaction(
   if (data.baseAmount !== undefined) updates.base_amount = data.baseAmount
   if (data.baseRate !== undefined) updates.base_rate = data.baseRate
   if (data.isIndexed !== undefined) updates.is_indexed = data.isIndexed
+  if (data.indexCurrencyId !== undefined) updates.index_currency_id = data.indexCurrencyId
   if (data.notes !== undefined) updates.notes = data.notes
   const { error } = await supabase.from('transactions').update(updates).eq('id', id)
   if (error) throw error
