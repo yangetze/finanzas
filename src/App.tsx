@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/hooks/useAuth'
 import { ToastProvider } from '@/components/ui/Toast'
 import { RequireAuth } from '@/components/layout/RequireAuth'
+import { AdminRoute } from '@/components/layout/AdminRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
 import { RegisterPage } from '@/pages/RegisterPage'
@@ -51,7 +52,14 @@ export default function App() {
               <Route path="/presupuesto" element={<BudgetPage />} />
               <Route path="/deudas" element={<DebtsPage />} />
               <Route path="/metas" element={<BabyStepsPage />} />
-              <Route path="/tasas" element={<ExchangeRatesPage />} />
+              <Route
+                path="/tasas"
+                element={
+                  <AdminRoute>
+                    <ExchangeRatesPage />
+                  </AdminRoute>
+                }
+              />
               <Route path="/configuracion" element={<SettingsPage />} />
             </Route>
           </Routes>

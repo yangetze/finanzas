@@ -3,6 +3,7 @@ import { Plus, RefreshCw } from 'lucide-react'
 import { useExchangeRates, useUpsertExchangeRate } from '@/hooks/useExchangeRates'
 import { useCurrencies } from '@/hooks/useCurrencies'
 import { fetchBcvRate } from '@/lib/bcv'
+import { fetchUsdtRate } from '@/lib/usdt'
 import { RateCard } from '@/components/exchange-rates/RateCard'
 import { RateForm } from '@/components/exchange-rates/RateForm'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +19,8 @@ export function ExchangeRatesPage() {
   const [editing, setEditing] = useState<ExchangeRate | null>(null)
   const [bcvLoading, setBcvLoading] = useState(false)
   const [bcvError, setBcvError] = useState('')
+  const [usdtLoading, setUsdtLoading] = useState(false)
+  const [usdtError, setUsdtError] = useState('')
 
   const isLoading = ratesLoading || currenciesLoading
 
@@ -66,6 +69,31 @@ export function ExchangeRatesPage() {
     }
   }
 
+  async function handleFetchUsdt() {
+    setUsdtError('')
+    setUsdtLoading(true)
+    try {
+      const { rate, date } = await fetchUsdtRate()
+      const usdtCurrency = currencies?.find((c) => c.code === 'USDt')
+      const vesCurrency = currencies?.find((c) => c.code === 'VES')
+      if (!usdtCurrency || !vesCurrency) {
+        setUsdtError('No se encontraron las monedas USDt o VES en la base de datos.')
+        return
+      }
+      await upsert.mutateAsync({
+        fromCurrencyId: usdtCurrency.id,
+        toCurrencyId: vesCurrency.id,
+        rate,
+        rateDate: date,
+        source: 'USDT',
+      })
+    } catch {
+      setUsdtError('No se pudo obtener la tasa de USDT. Intenta de nuevo.')
+    } finally {
+      setUsdtLoading(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -83,6 +111,10 @@ export function ExchangeRatesPage() {
             <RefreshCw size={14} />
             BCV
           </Button>
+          <Button size="sm" variant="ghost" onClick={handleFetchUsdt} loading={usdtLoading}>
+            <RefreshCw size={14} />
+            USDT
+          </Button>
           <Button size="sm" onClick={() => setShowForm(true)}>
             <Plus size={16} />
             Nueva
@@ -92,6 +124,9 @@ export function ExchangeRatesPage() {
 
       {bcvError && (
         <p className="text-sm text-coral font-ui">{bcvError}</p>
+      )}
+      {usdtError && (
+        <p className="text-sm text-coral font-ui">{usdtError}</p>
       )}
 
       {showForm && currencies && (
@@ -127,6 +162,10 @@ export function ExchangeRatesPage() {
             <Button size="sm" variant="ghost" onClick={handleFetchBcv} loading={bcvLoading}>
               <RefreshCw size={14} />
               Obtener del BCV
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleFetchUsdt} loading={usdtLoading}>
+              <RefreshCw size={14} />
+              Obtener USDT
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setShowForm(true)}>
               Ingresar manualmente
